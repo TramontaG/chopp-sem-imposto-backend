@@ -1,0 +1,6 @@
+[submodule "kozz-baileys"]
+	path = kozz-baileys
+	url = git@github.com:Kozz-Bot/kozz-baileys.git
+[submodule "kozz-gateway"]
+	path = kozz-gateway
+	url = git@github.com:Kozz-Bot/Kozz-Gateway.git
