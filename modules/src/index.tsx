@@ -8,6 +8,8 @@ const Greeting = () => (
   </>
 );
 
+console.log("started!");
+
 createModule({
   name: "kozz",
   address: "ws://127.0.0.1:4521",

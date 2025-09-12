@@ -14,6 +14,7 @@ const Greeting = () => (0, _jsxRuntime.jsx)(_jsxRuntime.Fragment, {
     })]
   })
 });
+console.log("started!");
 (0, _kozzModuleMaker.createModule)({
   name: "kozz",
   address: "ws://127.0.0.1:4521",
