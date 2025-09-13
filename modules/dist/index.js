@@ -1,7 +1,10 @@
 "use strict";
 
 var _kozzModuleMaker = require("kozz-module-maker");
+var _express = _interopRequireDefault(require("express"));
+var _Router = _interopRequireDefault(require("./Router"));
 var _jsxRuntime = require("kozz-module-maker/dist/jsx-runtime");
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
@@ -14,7 +17,11 @@ const Greeting = () => (0, _jsxRuntime.jsx)(_jsxRuntime.Fragment, {
     })]
   })
 });
-console.log("started!");
+const App = (0, _express.default)();
+App.use("/", _Router.default);
+App.listen(1549, () => {
+  console.log("started API server on port 1549");
+});
 (0, _kozzModuleMaker.createModule)({
   name: "kozz",
   address: "ws://127.0.0.1:4521",

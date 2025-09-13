@@ -1,4 +1,7 @@
 import { Bold, createMethod, createModule, Line } from "kozz-module-maker";
+import express from "express";
+import { app } from "firebase-admin";
+import AppRouter from "./Router";
 
 const Greeting = () => (
   <>
@@ -8,7 +11,13 @@ const Greeting = () => (
   </>
 );
 
-console.log("started!");
+const App = express();
+
+App.use("/", AppRouter);
+
+App.listen(1549, () => {
+  console.log("started API server on port 1549");
+});
 
 createModule({
   name: "kozz",

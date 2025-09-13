@@ -22,9 +22,16 @@ export const DbManager = <EntityType extends EntityTypes>(
     id: string,
     data: Partial<DatabaseFriendlyEntityModel<"user">>
   ) => {
-    return dbCollection.doc(id).set(data, {
-      merge: true,
-    });
+    return dbCollection.doc(id).set(
+      {
+        ...data,
+        id,
+        updatedAt: Date.now(),
+      },
+      {
+        merge: true,
+      }
+    );
   };
 
   const readEntity = (id: string) => {
@@ -35,8 +42,12 @@ export const DbManager = <EntityType extends EntityTypes>(
   };
 
   const deleteEntity = (id: string) => {
-    return dbCollection.doc(id).delete();
+    return upsertEntity(id, {
+      deletedAt: Date.now(),
+    });
   };
+
+  const hardDelete = (id: string) => dbCollection.doc(id).delete();
 
   const entityExists = (id: string) => {
     return dbCollection
@@ -61,6 +72,7 @@ export const DbManager = <EntityType extends EntityTypes>(
     upsertEntity,
     readEntity,
     deleteEntity,
+    hardDelete,
     entityExists,
     createQuery,
     runQuery,
