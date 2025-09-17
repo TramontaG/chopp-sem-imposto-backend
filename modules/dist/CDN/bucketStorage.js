@@ -5,12 +5,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.uploadToBucket = exports.getFileUrl = exports.downloadFile = exports.bucket = void 0;
 var _storage = require("firebase-admin/storage");
-var _firebaseAdmin = _interopRequireDefault(require("firebase-admin"));
+var _Firebase = _interopRequireDefault(require("../Firebase"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-const firebase = _firebaseAdmin.default.initializeApp({
-  credential: _firebaseAdmin.default.credential.applicationDefault()
-});
-const bucket = exports.bucket = (0, _storage.getStorage)(firebase).bucket(process.env.FIREBASE_BUCKET);
+const bucket = exports.bucket = (0, _storage.getStorage)(_Firebase.default).bucket(process.env.FIREBASE_BUCKET);
 const uploadToBucket = async (fileName, fileAsBuffer) => {
   await bucket.file(fileName).save(fileAsBuffer);
   return getFileUrl(fileName);

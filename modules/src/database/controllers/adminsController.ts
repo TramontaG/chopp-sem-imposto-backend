@@ -1,4 +1,9 @@
 import DbManager from "..";
+import {
+  FAIL_REASONS,
+  transactionError,
+  transactionSuccess,
+} from "../../Util/SafeDatabaseTransaction";
 import type { AllEntitiesModel, DatabaseFriendlyEntityModel } from "../schemas";
 import crypto from "crypto";
 
@@ -35,7 +40,7 @@ const adminController = () => {
     )[0];
 
     if (!!adminExists) {
-      throw new Error("Admin already exists");
+      return transactionError(FAIL_REASONS.ALREADY_EXISTS);
     }
 
     const id = `admin_${name}_${crypto.randomUUID()}`;
@@ -53,21 +58,32 @@ const adminController = () => {
       deletedAt: null,
     };
 
-    return await adminDb.upsertEntity(id, admin);
+    await adminDb.upsertEntity(id, admin);
+
+    return transactionSuccess(id);
   };
 
   const getAdmin = async (id: string) => {
-    return await adminDb.readEntity(id);
+    const adminExists = await adminDb.entityExists(id);
+    if (!adminExists) return transactionError(FAIL_REASONS.NOT_FOUND);
+
+    return transactionSuccess(await adminDb.readEntity(id));
   };
 
   const updateAdmin = async (
     id: string,
     updateData: Partial<DatabaseFriendlyEntityModel<"admin">>
   ) => {
-    return await adminDb.upsertEntity(id, updateData);
+    const adminExists = await adminDb.entityExists(id);
+    if (!adminExists) return transactionError(FAIL_REASONS.NOT_FOUND);
+
+    return transactionSuccess(await adminDb.upsertEntity(id, updateData));
   };
 
   const deleteAdmin = async (id: string) => {
+    const adminExists = await adminDb.entityExists(id);
+    if (!adminExists) return transactionError(FAIL_REASONS.NOT_FOUND);
+
     return await adminDb.deleteEntity(id);
   };
 
@@ -75,13 +91,13 @@ const adminController = () => {
     const admin = (
       await adminDb.runQuery(queries.getAdminByUsername(username))
     )[0];
-    if (!admin) throw new Error("Admin not found");
+    if (!admin) return transactionError(FAIL_REASONS.NOT_FOUND);
 
     const hashedPassword = await hashPassword(password, admin.salt);
     if (hashedPassword !== admin.passwordHash)
-      throw new Error("Invalid password");
+      return transactionError(FAIL_REASONS.FAIL_LOGIN);
 
-    return admin;
+    return transactionSuccess(admin);
   };
 
   return {

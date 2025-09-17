@@ -5,6 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 var _ = _interopRequireDefault(require(".."));
+var _SafeDatabaseTransaction = require("../../Util/SafeDatabaseTransaction");
 var _crypto = _interopRequireDefault(require("crypto"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const adminDb = (0, _.default)("admin");
@@ -28,7 +29,7 @@ const adminController = () => {
   }) => {
     const adminExists = (await adminDb.runQuery(queries.getAdminByUsername(username)))[0];
     if (!!adminExists) {
-      throw new Error("Admin already exists");
+      return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.ALREADY_EXISTS);
     }
     const id = `admin_${name}_${_crypto.default.randomUUID()}`;
     const salt = _crypto.default.randomBytes(32).toString("hex");
@@ -42,23 +43,30 @@ const adminController = () => {
       updatedAt: Date.now(),
       deletedAt: null
     };
-    return await adminDb.upsertEntity(id, admin);
+    await adminDb.upsertEntity(id, admin);
+    return (0, _SafeDatabaseTransaction.transactionSuccess)(id);
   };
   const getAdmin = async id => {
-    return await adminDb.readEntity(id);
+    const adminExists = await adminDb.entityExists(id);
+    if (!adminExists) return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND);
+    return (0, _SafeDatabaseTransaction.transactionSuccess)(await adminDb.readEntity(id));
   };
   const updateAdmin = async (id, updateData) => {
-    return await adminDb.upsertEntity(id, updateData);
+    const adminExists = await adminDb.entityExists(id);
+    if (!adminExists) return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND);
+    return (0, _SafeDatabaseTransaction.transactionSuccess)(await adminDb.upsertEntity(id, updateData));
   };
   const deleteAdmin = async id => {
+    const adminExists = await adminDb.entityExists(id);
+    if (!adminExists) return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND);
     return await adminDb.deleteEntity(id);
   };
   const login = async (username, password) => {
     const admin = (await adminDb.runQuery(queries.getAdminByUsername(username)))[0];
-    if (!admin) throw new Error("Admin not found");
+    if (!admin) return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND);
     const hashedPassword = await hashPassword(password, admin.salt);
-    if (hashedPassword !== admin.passwordHash) throw new Error("Invalid password");
-    return admin;
+    if (hashedPassword !== admin.passwordHash) return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.FAIL_LOGIN);
+    return (0, _SafeDatabaseTransaction.transactionSuccess)(admin);
   };
   return {
     createAdmin,

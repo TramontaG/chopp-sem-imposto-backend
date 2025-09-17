@@ -1,9 +1,5 @@
 import { getDownloadURL, getStorage } from "firebase-admin/storage";
-import admin from "firebase-admin";
-
-const firebase = admin.initializeApp({
-  credential: admin.credential.applicationDefault(),
-});
+import firebase from "../Firebase";
 
 export const bucket = getStorage(firebase).bucket(process.env.FIREBASE_BUCKET);
 

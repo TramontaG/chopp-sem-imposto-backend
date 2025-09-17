@@ -3,10 +3,7 @@ import type { RequestHandler } from "express";
 export {};
 
 type RequestContext = {
-  job: {
-    type: "ocr" | "tts";
-    id: string;
-  };
+  userId: string;
 };
 
 declare global {

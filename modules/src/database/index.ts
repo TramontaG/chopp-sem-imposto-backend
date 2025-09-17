@@ -1,15 +1,11 @@
 import { Query } from "firebase-admin/firestore";
-import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import type {
   DatabaseFriendlyEntityModel,
   EntityTypes,
   WithID,
 } from "./schemas";
-
-const firebase = admin.initializeApp({
-  credential: admin.credential.applicationDefault(),
-});
+import firebase from "../Firebase";
 
 export const db = getFirestore(firebase);
 
@@ -61,15 +57,21 @@ export const DbManager = <EntityType extends EntityTypes>(
   };
 
   const runQuery = (query: Query) => {
+    return query.get().then((result) => {
+      return result.docs.map((doc) => doc.data() as WithID<EntityType>);
+    });
+  };
+
+  const countByQuery = (query: Query) => {
     return query
+      .count()
       .get()
-      .then((result) =>
-        result.docs.map((doc) => doc.data() as WithID<EntityType>)
-      );
+      .then((result) => result.data().count);
   };
 
   return {
     upsertEntity,
+    countByQuery,
     readEntity,
     deleteEntity,
     hardDelete,

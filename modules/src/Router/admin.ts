@@ -2,13 +2,22 @@ import { Router, json } from "express";
 import { safeRequest } from "../Util/SafeRequest";
 import * as V from "../Util/ZodValidation";
 import adminsController from "../database/controllers/adminsController";
-import { generateJwt } from "../JWT";
+import { generateJwt, useJWT } from "../JWT";
+import { useRequestContext } from "../Util/requestContext";
+import cookieParser from "cookie-parser";
+import {
+  isTransactionSuccessful,
+  safeReturnTransaction,
+} from "../Util/SafeDatabaseTransaction";
+import { dryRunNormalizeCities } from "../Util/sanitizeCity";
+import userController from "../database/controllers/userController";
 
 const adminRouter = Router();
 
 adminRouter.post(
   "/create",
-  json(),
+  useRequestContext({}),
+  useJWT(["create-account"]),
   safeRequest(async (req, res) => {
     const { name, password, permissions, username } = V.validate(
       {
@@ -27,13 +36,14 @@ adminRouter.post(
       username,
     });
 
-    return result;
+    return safeReturnTransaction(result);
   })
 );
 
 adminRouter.post(
   "/login",
   json(),
+  cookieParser(),
   safeRequest(async (req, res) => {
     const { username, password } = V.validate(
       {
@@ -43,7 +53,13 @@ adminRouter.post(
       req.body
     );
 
-    const result = await adminsController.login(username, password);
+    const loginTransaction = await adminsController.login(username, password);
+
+    if (!isTransactionSuccessful(loginTransaction)) {
+      return safeReturnTransaction(loginTransaction);
+    }
+
+    const result = loginTransaction.data;
 
     const jwt = generateJwt({
       userId: result.id,
@@ -60,5 +76,19 @@ adminRouter.post(
     return { jwt };
   })
 );
+
+adminRouter.post("/sanitize-city", async (req, res) => {
+  const suggestions = await dryRunNormalizeCities();
+
+  const result = await Promise.all(
+    suggestions.map((suggestion) => {
+      userController.updateUser(suggestion.id, {
+        city: suggestion.after,
+      });
+    })
+  );
+
+  res.send(result);
+});
 
 export default adminRouter;

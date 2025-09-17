@@ -19,6 +19,7 @@ type User = {
 type Admin = {
   name: string;
   username: string;
+  salt: string;
   passwordHash: string;
   permissions: string[];
 

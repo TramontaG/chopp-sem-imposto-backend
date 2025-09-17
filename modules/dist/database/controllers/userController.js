@@ -8,6 +8,7 @@ var _firestore = require("firebase-admin/firestore");
 var _ = _interopRequireDefault(require(".."));
 var _eventsController = _interopRequireDefault(require("./eventsController."));
 var _yasms = require("yasms");
+var _SafeDatabaseTransaction = require("../../Util/SafeDatabaseTransaction");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -23,23 +24,36 @@ const queries = {
   },
   filterByIds: ids => {
     return userDB.createQuery(q => q.where("id", "in", ids));
+  },
+  getAll: () => {
+    return userDB.createQuery(q => q.where("deletedAt", "==", null));
+  },
+  getAllConfirmed: () => {
+    return userDB.createQuery(q => q.where("confirmed", "==", true).where("deletedAt", "==", null));
   }
 };
 const userManager = () => {
-  const createUser = ({
+  const createUser = async ({
     name,
     phoneNumber,
     city,
     DOB,
-    source
+    source,
+    confirmed
   }) => {
+    userMemo.deleteData(`queryphone-${phoneNumber}`); //should be removed
+
+    const phoneNotInUse = await assertPhoneNotInUse(phoneNumber);
+    if (!phoneNotInUse) {
+      return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.ALREADY_EXISTS);
+    }
     const id = `${name}-${crypto.randomUUID()}`;
     const userData = {
       name,
       phoneNumber,
       city,
       DOB,
-      confirmed: false,
+      confirmed: Boolean(confirmed),
       eventsAttended: [],
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -49,7 +63,14 @@ const userManager = () => {
       sex: null,
       source: source || "novo"
     };
-    return userDB.upsertEntity(id, userData);
+    await userDB.upsertEntity(id, userData);
+    return (0, _SafeDatabaseTransaction.transactionSuccess)({
+      id
+    });
+  };
+  const getAllUsers = async () => {
+    const data = await userDB.runQuery(queries.getAll());
+    return data;
   };
   const updateUser = (id, data) => {
     userMemo.deleteData(id);
@@ -101,8 +122,15 @@ const userManager = () => {
     const users = await userDB.runQuery(queries.filterByIds(ids));
     return users;
   };
+  const getTotalUsers = async confirmed => {
+    const usersAmount = await userDB.countByQuery(confirmed ? queries.getAllConfirmed() : queries.getAll());
+    return (0, _SafeDatabaseTransaction.transactionSuccess)({
+      amount: usersAmount
+    });
+  };
   return {
     createUser,
+    getAllUsers,
     updateUser,
     getUserById,
     deleteUser,
@@ -110,7 +138,8 @@ const userManager = () => {
     getUsersByIds,
     assertPhoneNotInUse,
     userAttendToEvent,
-    userInterestedInEvent
+    userInterestedInEvent,
+    getTotalUsers
   };
 };
 var _default = exports.default = userManager();

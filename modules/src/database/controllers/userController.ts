@@ -7,6 +7,11 @@ import type {
 } from "../schemas";
 import eventsController from "./eventsController.";
 import { createMemoService } from "yasms";
+import {
+  FAIL_REASONS,
+  transactionError,
+  transactionSuccess,
+} from "../../Util/SafeDatabaseTransaction";
 
 const MINUTE_IN_MS = 1000 * 60;
 const userMemo = createMemoService(undefined, MINUTE_IN_MS);
@@ -18,34 +23,49 @@ const queries = {
       q.where("phoneNumber", "==", phoneNumber).where("deletedAt", "==", null)
     );
   },
-
   filterByIds: (ids: string[]) => {
     return userDB.createQuery((q) => q.where("id", "in", ids));
+  },
+  getAll: () => {
+    return userDB.createQuery((q) => q.where("deletedAt", "==", null));
+  },
+  getAllConfirmed: () => {
+    return userDB.createQuery((q) =>
+      q.where("confirmed", "==", true).where("deletedAt", "==", null)
+    );
   },
 };
 
 const userManager = () => {
-  const createUser = ({
+  const createUser = async ({
     name,
     phoneNumber,
     city,
     DOB,
     source,
+    confirmed,
   }: {
     name: string;
     phoneNumber: string;
     city: string;
     DOB: number | null;
     source: AllEntitiesModel["user"]["source"] | null;
+    confirmed: boolean | null;
   }) => {
-    const id = `${name}-${crypto.randomUUID()}`;
+    userMemo.deleteData(`queryphone-${phoneNumber}`); //should be removed
 
+    const phoneNotInUse = await assertPhoneNotInUse(phoneNumber);
+    if (!phoneNotInUse) {
+      return transactionError(FAIL_REASONS.ALREADY_EXISTS);
+    }
+
+    const id = `${name}-${crypto.randomUUID()}`;
     const userData: AllEntitiesModel["user"] = {
       name,
       phoneNumber,
       city,
       DOB,
-      confirmed: false,
+      confirmed: Boolean(confirmed),
       eventsAttended: [],
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -56,7 +76,14 @@ const userManager = () => {
       source: source || "novo",
     };
 
-    return userDB.upsertEntity(id, userData);
+    await userDB.upsertEntity(id, userData);
+
+    return transactionSuccess({ id });
+  };
+
+  const getAllUsers = async () => {
+    const data = await userDB.runQuery(queries.getAll());
+    return data;
   };
 
   const updateUser = (
@@ -137,8 +164,16 @@ const userManager = () => {
     return users;
   };
 
+  const getTotalUsers = async (confirmed: boolean) => {
+    const usersAmount = await userDB.countByQuery(
+      confirmed ? queries.getAllConfirmed() : queries.getAll()
+    );
+    return transactionSuccess({ amount: usersAmount });
+  };
+
   return {
     createUser,
+    getAllUsers,
     updateUser,
     getUserById,
     deleteUser,
@@ -147,6 +182,7 @@ const userManager = () => {
     assertPhoneNotInUse,
     userAttendToEvent,
     userInterestedInEvent,
+    getTotalUsers,
   };
 };
 

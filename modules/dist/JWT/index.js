@@ -3,10 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.verifyJwt = exports.generateJwt = exports.checkJWT = exports.arraysContainAllElements = void 0;
+exports.verifyJwt = exports.useJWT = exports.generateJwt = exports.checkJWT = exports.arraysContainAllElements = void 0;
 var _jsonwebtoken = _interopRequireDefault(require("jsonwebtoken"));
 var _fs = _interopRequireDefault(require("fs"));
 var _adminsController = _interopRequireDefault(require("../database/controllers/adminsController"));
+var _express = require("express");
+var _cookieParser = _interopRequireDefault(require("cookie-parser"));
+var _SafeDatabaseTransaction = require("../Util/SafeDatabaseTransaction");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -41,7 +44,11 @@ const checkJWT = async (jwt, permissions) => {
       userId,
       username
     } = verifyJwt(jwt);
-    const adminData = await _adminsController.default.getAdmin(userId);
+    const adminDataTransaction = await _adminsController.default.getAdmin(userId);
+    if (!(0, _SafeDatabaseTransaction.isTransactionSuccessful)(adminDataTransaction)) {
+      return false;
+    }
+    const adminData = adminDataTransaction.data;
     const hasAllPerms = arraysContainAllElements(adminData.permissions, permissions) || adminData.permissions.includes("*");
     if (hasAllPerms) {
       return {
@@ -61,4 +68,34 @@ const arraysContainAllElements = (A, B) => {
   return B.every(element => A.includes(element));
 };
 exports.arraysContainAllElements = arraysContainAllElements;
+const useJWT = (permissions = []) => {
+  const jwtMiddleware = async (req, res, next) => {
+    const jwt = req.headers.authorization || req.body.jwt || req.params.jwt || req.cookies.jwt;
+    if (!jwt) {
+      return res.status(401).send({
+        errorType: "Transaction",
+        message: "Please login to continue"
+      });
+    }
+    const jwtResult = await checkJWT(jwt, permissions);
+    if (jwtResult) {
+      req.context.set("userId", jwtResult.userId);
+      const newJwt = generateJwt(jwtResult);
+      res.cookie("jwt", newJwt, {
+        httpOnly: true,
+        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        sameSite: "none",
+        secure: true
+      });
+      return next();
+    } else {
+      res.status(403).send({
+        errorType: "Transaction",
+        message: "Not authorized"
+      });
+    }
+  };
+  return [(0, _cookieParser.default)(), (0, _express.json)(), jwtMiddleware];
+};
+exports.useJWT = useJWT;
 //# sourceMappingURL=index.js.map
