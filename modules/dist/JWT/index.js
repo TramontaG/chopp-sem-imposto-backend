@@ -10,6 +10,7 @@ var _adminsController = _interopRequireDefault(require("../database/controllers/
 var _express = require("express");
 var _cookieParser = _interopRequireDefault(require("cookie-parser"));
 var _SafeDatabaseTransaction = require("../Util/SafeDatabaseTransaction");
+var _requestContext = require("../Util/requestContext");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -70,7 +71,9 @@ const arraysContainAllElements = (A, B) => {
 exports.arraysContainAllElements = arraysContainAllElements;
 const useJWT = (permissions = []) => {
   const jwtMiddleware = async (req, res, next) => {
-    const jwt = req.headers.authorization || req.body.jwt || req.params.jwt || req.cookies.jwt;
+    const jwt = req.headers.authorization || (req.body ?? {}).jwt ||
+    //req.body is undefined when method is GET
+    req.params.jwt || req.cookies.jwt;
     if (!jwt) {
       return res.status(401).send({
         errorType: "Transaction",
@@ -95,7 +98,7 @@ const useJWT = (permissions = []) => {
       });
     }
   };
-  return [(0, _cookieParser.default)(), (0, _express.json)(), jwtMiddleware];
+  return [(0, _requestContext.useRequestContext)({}), (0, _cookieParser.default)(), (0, _express.json)(), jwtMiddleware];
 };
 exports.useJWT = useJWT;
 //# sourceMappingURL=index.js.map

@@ -13,7 +13,7 @@ const publicRouter = (0, _express.Router)();
 publicRouter.get("/:src/:event/:file", (0, _SafeRequest.safeRequest)(async (req, res) => {
   const fileId = `${req.params.src}/${req.params.event}/${req.params.file}`;
   const file = await (0, _bucketStorage.downloadFile)(fileId);
-  res.setHeader("Content-Type", _mimeTypes.default.lookup(req.params.file) || "application/octet-steam")
+  return res.setHeader("Content-Type", _mimeTypes.default.lookup(req.params.file) || "application/octet-steam")
   // avoids cacheing the result on cloudflare reverse proxy
   .setHeader("X-Content-Type-Options", "nosniff").send(file);
 }));

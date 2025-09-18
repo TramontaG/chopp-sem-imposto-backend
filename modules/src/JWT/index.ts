@@ -7,6 +7,7 @@ import {
   isTransactionSuccessful,
   safeReturnTransaction,
 } from "../Util/SafeDatabaseTransaction";
+import { useRequestContext } from "../Util/requestContext";
 
 const privateKEY =
   process.env.PRIVATE_KEY ?? fs.readFileSync("./keys/privatekey.pem", "utf8");
@@ -84,7 +85,7 @@ export const useJWT = (permissions: string[] = []): RequestHandler[] => {
   const jwtMiddleware: RequestHandler = async (req, res, next) => {
     const jwt: string =
       req.headers.authorization ||
-      req.body.jwt ||
+      (req.body ?? {}).jwt || //req.body is undefined when method is GET
       req.params.jwt ||
       req.cookies.jwt;
     if (!jwt) {
@@ -117,5 +118,5 @@ export const useJWT = (permissions: string[] = []): RequestHandler[] => {
     }
   };
 
-  return [cookieParser(), json(), jwtMiddleware];
+  return [useRequestContext({}), cookieParser(), json(), jwtMiddleware];
 };

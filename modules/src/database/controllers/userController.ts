@@ -12,6 +12,7 @@ import {
   transactionError,
   transactionSuccess,
 } from "../../Util/SafeDatabaseTransaction";
+import { eventCofirmationCryptoService } from "../../Util/crypto-service";
 
 const MINUTE_IN_MS = 1000 * 60;
 const userMemo = createMemoService(undefined, MINUTE_IN_MS);
@@ -147,16 +148,16 @@ const userManager = () => {
 
   const userInterestedInEvent = async (userId: string, eventId: string) => {
     const userExists = await assertUserExists(userId);
-    if (!userExists) throw new Error("User does not exist");
+    if (!userExists) return transactionError(FAIL_REASONS.NOT_FOUND);
 
     const eventExists = await eventsController.assertEventExists(eventId);
-    if (!eventExists) throw new Error("Event does not exist");
+    if (!eventExists) return transactionError(FAIL_REASONS.NOT_FOUND);
 
     eventsController.updateEvent(eventId, {
       interested: FieldValue.arrayUnion(userId),
     });
 
-    return eventId;
+    return transactionSuccess({ success: true });
   };
 
   const getUsersByIds = async (ids: string[]) => {
@@ -171,6 +172,22 @@ const userManager = () => {
     return transactionSuccess({ amount: usersAmount });
   };
 
+  const getConfirmationPayload = async (userId: string, eventId: string) => {
+    const userExists = await assertUserExists(userId);
+    if (!userExists) return transactionError(FAIL_REASONS.NOT_FOUND);
+
+    const eventExists = await eventsController.assertEventExists(eventId);
+    if (!eventExists) return transactionError(FAIL_REASONS.NOT_FOUND);
+
+    return transactionSuccess(
+      eventCofirmationCryptoService.encrypt({
+        action: "confirm",
+        eventId,
+        userId,
+      })
+    );
+  };
+
   return {
     createUser,
     getAllUsers,
@@ -183,6 +200,7 @@ const userManager = () => {
     userAttendToEvent,
     userInterestedInEvent,
     getTotalUsers,
+    getConfirmationPayload,
   };
 };
 

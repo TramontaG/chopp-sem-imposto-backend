@@ -9,15 +9,15 @@ var _SafeRequest = require("../Util/SafeRequest");
 var V = _interopRequireWildcard(require("../Util/ZodValidation"));
 var _adminsController = _interopRequireDefault(require("../database/controllers/adminsController"));
 var _JWT = require("../JWT");
-var _requestContext = require("../Util/requestContext");
 var _cookieParser = _interopRequireDefault(require("cookie-parser"));
 var _SafeDatabaseTransaction = require("../Util/SafeDatabaseTransaction");
 var _sanitizeCity = require("../Util/sanitizeCity");
 var _userController = _interopRequireDefault(require("../database/controllers/userController"));
+var _confirmationMessage = require("../Kozz-Module/Methods/confirmationMessage");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 const adminRouter = (0, _express.Router)();
-adminRouter.post("/create", (0, _requestContext.useRequestContext)({}), (0, _JWT.useJWT)(["create-account"]), (0, _SafeRequest.safeRequest)(async (req, res) => {
+adminRouter.post("/create", (0, _JWT.useJWT)(["create-account"]), (0, _SafeRequest.safeRequest)(async (req, res) => {
   const {
     name,
     password,
@@ -73,5 +73,16 @@ adminRouter.post("/sanitize-city", async (req, res) => {
   }));
   res.send(result);
 });
+adminRouter.post("/send_confirmation_message_to_everyone", (0, _JWT.useJWT)(["admin"]), (0, _express.json)(), (0, _SafeRequest.safeRequest)(async req => {
+  const {
+    eventId
+  } = V.validate({
+    eventId: V.string
+  }, req.body);
+  await (0, _confirmationMessage.sendConfirmationMessageToEveryone)(eventId);
+  return {
+    success: true
+  };
+}));
 var _default = exports.default = adminRouter;
 //# sourceMappingURL=admin.js.map

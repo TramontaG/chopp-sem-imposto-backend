@@ -11,6 +11,7 @@ import {
 } from "../Util/SafeDatabaseTransaction";
 import { useHMAC } from "../JWT/verifyHMAC";
 import { findBestCityMatch } from "../Util/sanitizeCity";
+import { sendConfirmationMessage } from "../Kozz-Module/Methods/confirmationMessage";
 
 const signupRouter = Router();
 
@@ -51,6 +52,15 @@ signupRouter.post(
       if (createUserTransaction.reason === FAIL_REASONS.ALREADY_EXISTS) {
         return transactionSuccess({ message: "resignup" });
       }
+    }
+
+    if (createUserTransaction.success) {
+      // TODO: Have to fetch next event and send message accordingly
+      // this hardcoded event ID should be removed
+      await sendConfirmationMessage(
+        createUserTransaction.data.id,
+        "Chopp sem imposto-062d8617-70c8-4f45-aa5e-e1acaae93f56"
+      );
     }
 
     return safeReturnTransaction(createUserTransaction);

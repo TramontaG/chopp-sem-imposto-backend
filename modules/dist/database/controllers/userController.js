@@ -9,6 +9,7 @@ var _ = _interopRequireDefault(require(".."));
 var _eventsController = _interopRequireDefault(require("./eventsController."));
 var _yasms = require("yasms");
 var _SafeDatabaseTransaction = require("../../Util/SafeDatabaseTransaction");
+var _cryptoService = require("../../Util/crypto-service");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -110,13 +111,15 @@ const userManager = () => {
   };
   const userInterestedInEvent = async (userId, eventId) => {
     const userExists = await assertUserExists(userId);
-    if (!userExists) throw new Error("User does not exist");
+    if (!userExists) return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND);
     const eventExists = await _eventsController.default.assertEventExists(eventId);
-    if (!eventExists) throw new Error("Event does not exist");
+    if (!eventExists) return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND);
     _eventsController.default.updateEvent(eventId, {
       interested: _firestore.FieldValue.arrayUnion(userId)
     });
-    return eventId;
+    return (0, _SafeDatabaseTransaction.transactionSuccess)({
+      success: true
+    });
   };
   const getUsersByIds = async ids => {
     const users = await userDB.runQuery(queries.filterByIds(ids));
@@ -127,6 +130,17 @@ const userManager = () => {
     return (0, _SafeDatabaseTransaction.transactionSuccess)({
       amount: usersAmount
     });
+  };
+  const getConfirmationPayload = async (userId, eventId) => {
+    const userExists = await assertUserExists(userId);
+    if (!userExists) return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND);
+    const eventExists = await _eventsController.default.assertEventExists(eventId);
+    if (!eventExists) return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND);
+    return (0, _SafeDatabaseTransaction.transactionSuccess)(_cryptoService.eventCofirmationCryptoService.encrypt({
+      action: "confirm",
+      eventId,
+      userId
+    }));
   };
   return {
     createUser,
@@ -139,7 +153,8 @@ const userManager = () => {
     assertPhoneNotInUse,
     userAttendToEvent,
     userInterestedInEvent,
-    getTotalUsers
+    getTotalUsers,
+    getConfirmationPayload
   };
 };
 var _default = exports.default = userManager();

@@ -11,14 +11,16 @@ publicRouter.get(
     const fileId = `${req.params.src}/${req.params.event}/${req.params.file}`;
     const file = await downloadFile(fileId);
 
-    res
-      .setHeader(
-        "Content-Type",
-        mime.lookup(req.params.file) || "application/octet-steam"
-      )
-      // avoids cacheing the result on cloudflare reverse proxy
-      .setHeader("X-Content-Type-Options", "nosniff")
-      .send(file);
+    return (
+      res
+        .setHeader(
+          "Content-Type",
+          mime.lookup(req.params.file) || "application/octet-steam"
+        )
+        // avoids cacheing the result on cloudflare reverse proxy
+        .setHeader("X-Content-Type-Options", "nosniff")
+        .send(file)
+    );
   })
 );
 

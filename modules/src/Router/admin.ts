@@ -11,12 +11,12 @@ import {
 } from "../Util/SafeDatabaseTransaction";
 import { dryRunNormalizeCities } from "../Util/sanitizeCity";
 import userController from "../database/controllers/userController";
+import { sendConfirmationMessageToEveryone } from "../Kozz-Module/Methods/confirmationMessage";
 
 const adminRouter = Router();
 
 adminRouter.post(
   "/create",
-  useRequestContext({}),
   useJWT(["create-account"]),
   safeRequest(async (req, res) => {
     const { name, password, permissions, username } = V.validate(
@@ -68,6 +68,7 @@ adminRouter.post(
 
     res.cookie("jwt", jwt, {
       httpOnly: true,
+
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       sameSite: "none",
       secure: true,
@@ -90,5 +91,20 @@ adminRouter.post("/sanitize-city", async (req, res) => {
 
   res.send(result);
 });
+
+adminRouter.post(
+  "/send_confirmation_message_to_everyone",
+  useJWT(["admin"]),
+  json(),
+  safeRequest(async (req) => {
+    const { eventId } = V.validate({ eventId: V.string }, req.body);
+
+    await sendConfirmationMessageToEveryone(eventId);
+
+    return {
+      success: true,
+    };
+  })
+);
 
 export default adminRouter;
