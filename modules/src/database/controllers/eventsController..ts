@@ -15,6 +15,13 @@ const MINUTE_IN_MS = 1000 * 60;
 const eventsMemo = createMemoService(undefined, MINUTE_IN_MS);
 const eventsDb = DbManager("event");
 
+const queries = {
+  upcomingEvents: () =>
+    eventsDb.createQuery((q) => q.where("date", ">", Date.now())),
+  allEvents: () =>
+    eventsDb.createQuery((q) => q.where("deletedAt", "==", null)),
+};
+
 const eventsController = () => {
   const createEvent = async ({
     name,
@@ -40,6 +47,7 @@ const eventsController = () => {
       description,
       hostContatInfo: null,
       interested: [],
+      invited: [],
       location,
       medias: [],
       name,
@@ -81,12 +89,18 @@ const eventsController = () => {
       .getData(`exists/${id}`, () => eventsDb.entityExists(id))
       .then((val) => val.data);
 
+  const getUpcomingEvents = async () => {
+    const upcomingEvents = await eventsDb.runQuery(queries.allEvents());
+    return upcomingEvents;
+  };
+
   return {
     createEvent,
     getEventById,
     updateEvent,
     deleteEvent,
     assertEventExists,
+    getUpcomingEvents,
   };
 };
 

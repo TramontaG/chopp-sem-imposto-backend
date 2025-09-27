@@ -9,7 +9,7 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
 const createCustomError = (code, variant, message) => ({
   code,
   error: {
-    errorType: 'Custom',
+    errorType: "Custom",
     variant,
     message
   }
@@ -18,7 +18,7 @@ exports.createCustomError = createCustomError;
 const createTransactionError = (code, reason, data) => ({
   code,
   error: {
-    errorType: 'Transaction',
+    errorType: "Transaction",
     message: reason,
     data
   }
@@ -43,7 +43,7 @@ const validate = (zod, obj) => {
     throw {
       code: 400,
       error: {
-        errorType: 'Validation',
+        errorType: "Validation",
         fields: query.error.issues
       }
     };
@@ -56,7 +56,7 @@ const validate = (zod, obj) => {
 exports.validate = validate;
 const literalSchema = Zod.union([Zod.string(), Zod.number(), Zod.boolean(), Zod.null()]);
 const jsonSchema = exports.jsonSchema = Zod.lazy(() => Zod.union([literalSchema, Zod.array(jsonSchema), Zod.record(jsonSchema)]));
-const string = exports.string = Zod.string().min(1);
+const string = exports.string = Zod.string();
 const number = exports.number = Zod.number();
 const stringArray = exports.stringArray = Zod.array(string);
 const optional = shape => shape.optional();
@@ -84,18 +84,18 @@ const cpfRegex = exports.cpfRegex = /^[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2}$/;
 const cnpjRegex = exports.cnpjRegex = /^[0-9]{2}\.[0-9]{3}\.[0-9]{3}\/[0-9]{4}-[0-9]{2}$/;
 const brazilianIdRegex = exports.brazilianIdRegex = /^[0-9]{2}\.[0-9]{3}\.[0-9]{3}-[0-9]$/;
 const cepRegex = exports.cepRegex = /^[0-9]{5}-[0-9]{3}$/;
-const phone = exports.phone = string.regex(phoneRegex, 'Deve ser um telefone válido, formato (99)99999-9999 or (99)9999-9999');
-const cpf = exports.cpf = string.regex(cpfRegex, 'Deve ser um CPF válido, formato 999.999.999-99');
-const cnpj = exports.cnpj = string.regex(cnpjRegex, 'Deve ser um CNPJ Válido, formato 99.999.999/9999-99');
-const brazilianId = exports.brazilianId = string.regex(brazilianIdRegex, 'Deve ser um RG válido, formato 99.999.999-*');
-const cep = exports.cep = string.regex(cepRegex, 'Deve ser um CEP válido, formato 99999-999');
-const emoji = exports.emoji = string.emoji('Deve ser um Emoji');
-const url = exports.url = string.url('URL inválida');
-const email = exports.email = string.email('Email inválido');
-const document = exports.document = string.regex(cpfRegex, 'Deve ser um CPF ou um CNPJ válido').or(string.regex(cnpjRegex));
+const phone = exports.phone = string.regex(phoneRegex, "Deve ser um telefone válido, formato (99)99999-9999 or (99)9999-9999");
+const cpf = exports.cpf = string.regex(cpfRegex, "Deve ser um CPF válido, formato 999.999.999-99");
+const cnpj = exports.cnpj = string.regex(cnpjRegex, "Deve ser um CNPJ Válido, formato 99.999.999/9999-99");
+const brazilianId = exports.brazilianId = string.regex(brazilianIdRegex, "Deve ser um RG válido, formato 99.999.999-*");
+const cep = exports.cep = string.regex(cepRegex, "Deve ser um CEP válido, formato 99999-999");
+const emoji = exports.emoji = string.emoji("Deve ser um Emoji");
+const url = exports.url = string.url("URL inválida");
+const email = exports.email = string.email("Email inválido");
+const document = exports.document = string.regex(cpfRegex, "Deve ser um CPF ou um CNPJ válido").or(string.regex(cnpjRegex));
 
 /**
  * Accepts strings that when lowercase results to "true" or "false", outputs the proper boolean value
  */
-const booleanAsString = exports.booleanAsString = string.toLowerCase().startsWith('true').endsWith('true').length(4).transform(() => true).or(string.toLowerCase().startsWith('false').endsWith('false').length(5).transform(() => false));
+const booleanAsString = exports.booleanAsString = string.toLowerCase().startsWith("true").endsWith("true").length(4).transform(() => true).or(string.toLowerCase().startsWith("false").endsWith("false").length(5).transform(() => false));
 //# sourceMappingURL=ZodValidation.js.map

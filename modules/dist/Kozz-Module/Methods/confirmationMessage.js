@@ -34,7 +34,7 @@ const sendConfirmationMessage = async (userId, eventId) => {
   if (bannerUrl) {
     const fileName = bannerUrl?.split("/").at(-1);
     const mimeType = _mimeTypes.default.lookup(fileName || "");
-    _.default.sendMessage.withMedia(contactId, "kozz-baileys", (0, _jsxRuntime.jsx)(RandomMessage, {
+    _.default.sendMessage.withMedia(contactId, "iae-baileys", (0, _jsxRuntime.jsx)(RandomMessage, {
       link: link,
       name: name
     }), {
@@ -47,7 +47,7 @@ const sendConfirmationMessage = async (userId, eventId) => {
       stickerTags: []
     });
   } else {
-    _.default.sendMessage(contactId, "kozz-baileys", (0, _jsxRuntime.jsx)(RandomMessage, {
+    _.default.sendMessage(contactId, "iae-baileys", (0, _jsxRuntime.jsx)(RandomMessage, {
       link: link,
       name: name
     }));
@@ -55,7 +55,7 @@ const sendConfirmationMessage = async (userId, eventId) => {
   await (0, _sleep.sleep)(2000 + Math.random() * 300); // between 2 and 5 seconds
 
   const RandomInviteMessage = [_Messages.inviteFriendMessage1, _Messages.inviteFriendMessage2, _Messages.inviteFriendMessage3][Math.floor(Math.random() * 3)];
-  _.default.sendMessage(contactId, "kozz-baileys", (0, _jsxRuntime.jsx)(RandomInviteMessage, {}));
+  _.default.sendMessage(contactId, "iae-baileys", (0, _jsxRuntime.jsx)(RandomInviteMessage, {}));
 };
 exports.sendConfirmationMessage = sendConfirmationMessage;
 const sendConfirmationMessageToEveryone = async eventId => {

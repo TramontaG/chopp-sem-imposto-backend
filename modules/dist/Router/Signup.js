@@ -11,7 +11,6 @@ var _userController = _interopRequireDefault(require("../database/controllers/us
 var _SafeDatabaseTransaction = require("../Util/SafeDatabaseTransaction");
 var _verifyHMAC = require("../JWT/verifyHMAC");
 var _sanitizeCity = require("../Util/sanitizeCity");
-var _confirmationMessage = require("../Kozz-Module/Methods/confirmationMessage");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 const signupRouter = (0, _express.default)();
@@ -53,7 +52,7 @@ signupRouter.post("/me", _verifyHMAC.useHMAC, (0, _express.json)(), (0, _SafeReq
   if (createUserTransaction.success) {
     // TODO: Have to fetch next event and send message accordingly
     // this hardcoded event ID should be removed
-    await (0, _confirmationMessage.sendConfirmationMessage)(createUserTransaction.data.id, "Chopp sem imposto-062d8617-70c8-4f45-aa5e-e1acaae93f56");
+    _userController.default.userInterestedInEvent(createUserTransaction.data.id, "Chopp sem imposto-062d8617-70c8-4f45-aa5e-e1acaae93f56");
   }
   return (0, _SafeDatabaseTransaction.safeReturnTransaction)(createUserTransaction);
 }));

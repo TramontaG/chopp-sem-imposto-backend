@@ -31,6 +31,9 @@ const queries = {
   },
   getAllConfirmed: () => {
     return userDB.createQuery(q => q.where("confirmed", "==", true).where("deletedAt", "==", null));
+  },
+  getByOrigin: origin => {
+    return userDB.createQuery(q => q.where("source", "==", origin)).where("deletedAt", "==", null);
   }
 };
 const userManager = () => {
@@ -44,6 +47,46 @@ const userManager = () => {
   }) => {
     userMemo.deleteData(`queryphone-${phoneNumber}`); //should be removed
 
+    const phoneNotInUse = await assertPhoneNotInUse(phoneNumber);
+    if (!phoneNotInUse) {
+      const fullUser = await getUserByPhoneNumber(phoneNumber);
+      await updateUser(fullUser.id, {
+        confirmed: true,
+        name,
+        city,
+        source: source ?? "referral"
+      });
+      return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.ALREADY_EXISTS);
+    }
+    const id = `${name}-${crypto.randomUUID()}`;
+    const userData = {
+      name,
+      phoneNumber,
+      city,
+      DOB,
+      confirmed: Boolean(confirmed),
+      eventsAttended: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      deletedAt: null,
+      neighborhood: null,
+      profession: null,
+      sex: null,
+      source: source || "novo"
+    };
+    await userDB.upsertEntity(id, userData);
+    return (0, _SafeDatabaseTransaction.transactionSuccess)({
+      id
+    });
+  };
+  const createUserAvoidingDuplicates = async ({
+    name,
+    phoneNumber,
+    city,
+    DOB,
+    source,
+    confirmed
+  }) => {
     const phoneNotInUse = await assertPhoneNotInUse(phoneNumber);
     if (!phoneNotInUse) {
       return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.ALREADY_EXISTS);
@@ -69,15 +112,43 @@ const userManager = () => {
       id
     });
   };
+  const upsertUser = async data => {
+    if (data.id) {
+      userMemo.deleteData(data.id);
+      return updateUser(data.id, _objectSpread({}, data));
+    } else {
+      const {
+        name,
+        phoneNumber,
+        city
+      } = data;
+      if (!name || !phoneNumber || !city) {
+        return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.TYPE_MISMATCH);
+      }
+      return createUser({
+        city,
+        confirmed: true,
+        phoneNumber,
+        name,
+        source: data.source || "referral",
+        DOB: data.DOB ?? null
+      });
+    }
+  };
   const getAllUsers = async () => {
     const data = await userDB.runQuery(queries.getAll());
     return data;
   };
-  const updateUser = (id, data) => {
+  const updateUser = async (id, data) => {
     userMemo.deleteData(id);
-    return userDB.upsertEntity(id, _objectSpread(_objectSpread({}, data), {}, {
+    const userExists = await assertUserExists(id);
+    if (!userExists) {
+      return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND);
+    }
+    await userDB.upsertEntity(id, _objectSpread(_objectSpread({}, data), {}, {
       updatedAt: Date.now()
     }));
+    return (0, _SafeDatabaseTransaction.transactionSuccess)(await getUserById(id));
   };
   const getUserById = id => {
     return userMemo.getData(id, () => userDB.readEntity(id)).then(val => val.data);
@@ -88,6 +159,10 @@ const userManager = () => {
       deletedAt: Date.now()
     });
   };
+  const hardDeleteUser = id => {
+    userMemo.deleteData(id);
+    return userDB.deleteEntity(id);
+  };
   const assertUserExists = async id => {
     const exists = await userMemo.getData(`exists/${id}`, () => userDB.entityExists(id)).then(val => val.data);
     return exists;
@@ -96,18 +171,24 @@ const userManager = () => {
     const results = await userMemo.getData(`queryphone-${phoneNumber}`, () => userDB.runQuery(queries.filterByPhoneNumber(phoneNumber))).then(val => val.data);
     return results.length === 0;
   };
+  const getUserByPhoneNumber = async phoneNumber => {
+    const results = await userMemo.getData(`queryphone-${phoneNumber}`, () => userDB.runQuery(queries.filterByPhoneNumber(phoneNumber))).then(val => val.data);
+    return results[0];
+  };
   const userAttendToEvent = async (userId, eventId) => {
     const userExists = await assertUserExists(userId);
-    if (!userExists) throw new Error("User does not exist");
+    if (!userExists) return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND);
     const eventExists = await _eventsController.default.assertEventExists(eventId);
-    if (!eventExists) throw new Error("Event does not exist");
+    if (!eventExists) return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND);
     updateUser(userId, {
       eventsAttended: _firestore.FieldValue.arrayUnion(eventId)
     });
     _eventsController.default.updateEvent(eventId, {
       attendees: _firestore.FieldValue.arrayUnion(userId)
     });
-    return eventId;
+    return (0, _SafeDatabaseTransaction.transactionSuccess)({
+      success: true
+    });
   };
   const userInterestedInEvent = async (userId, eventId) => {
     const userExists = await assertUserExists(userId);
@@ -115,7 +196,20 @@ const userManager = () => {
     const eventExists = await _eventsController.default.assertEventExists(eventId);
     if (!eventExists) return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND);
     _eventsController.default.updateEvent(eventId, {
-      interested: _firestore.FieldValue.arrayUnion(userId)
+      interested: _firestore.FieldValue.arrayUnion(userId),
+      invited: _firestore.FieldValue.arrayUnion(userId)
+    });
+    return (0, _SafeDatabaseTransaction.transactionSuccess)({
+      success: true
+    });
+  };
+  const userInvitedToEvent = async (userId, eventId) => {
+    const userExists = await assertUserExists(userId);
+    if (!userExists) return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND);
+    const eventExists = await _eventsController.default.assertEventExists(eventId);
+    if (!eventExists) return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND);
+    _eventsController.default.updateEvent(eventId, {
+      invited: _firestore.FieldValue.arrayUnion(userId)
     });
     return (0, _SafeDatabaseTransaction.transactionSuccess)({
       success: true
@@ -142,17 +236,26 @@ const userManager = () => {
       userId
     }));
   };
+  const getUsersByOrigin = origin => {
+    return userDB.runQuery(queries.getByOrigin(origin));
+  };
   return {
     createUser,
     getAllUsers,
     updateUser,
     getUserById,
+    getUserByPhoneNumber,
     deleteUser,
+    hardDeleteUser,
     assertUserExists,
     getUsersByIds,
     assertPhoneNotInUse,
     userAttendToEvent,
+    upsertUser,
+    createUserAvoidingDuplicates,
+    getUsersByOrigin,
     userInterestedInEvent,
+    userInvitedToEvent,
     getTotalUsers,
     getConfirmationPayload
   };

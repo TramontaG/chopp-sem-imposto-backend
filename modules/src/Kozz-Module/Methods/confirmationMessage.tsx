@@ -46,7 +46,7 @@ export const sendConfirmationMessage = async (
 
     Module.sendMessage.withMedia(
       contactId,
-      "kozz-baileys",
+      "iae-baileys",
       <RandomMessage link={link} name={name} />,
       {
         data: bannerUrl,
@@ -61,7 +61,7 @@ export const sendConfirmationMessage = async (
   } else {
     Module.sendMessage(
       contactId,
-      "kozz-baileys",
+      "iae-baileys",
       <RandomMessage link={link} name={name} />
     );
   }
@@ -74,7 +74,7 @@ export const sendConfirmationMessage = async (
     inviteFriendMessage3,
   ][Math.floor(Math.random() * 3)];
 
-  Module.sendMessage(contactId, "kozz-baileys", <RandomInviteMessage />);
+  Module.sendMessage(contactId, "iae-baileys", <RandomInviteMessage />);
 };
 
 export const sendConfirmationMessageToEveryone = async (eventId: string) => {

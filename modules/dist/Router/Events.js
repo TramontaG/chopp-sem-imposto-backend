@@ -49,7 +49,6 @@ EventsRouter.post("/update_event", (0, _JWT.useJWT)(["events_create"]), (0, _Saf
     data
   } = V.validate({
     id: V.string,
-    // This should be improved
     data: V.anyObject
   }, req.body);
   const updateTransaction = await _eventsController.default.updateEvent(id, data);
@@ -126,6 +125,47 @@ EventsRouter.post("/send_confirmation_message", (0, _JWT.useJWT)(["admin"]), (0,
   res.send({
     success: "maybe?"
   });
+}));
+EventsRouter.get("/upcoming", (0, _SafeRequest.safeRequest)(async (req, res) => {
+  const events = await _eventsController.default.getUpcomingEvents();
+  console.log({
+    events
+  });
+  return {
+    data: events
+  };
+}));
+EventsRouter.post("/random_atendee", (0, _JWT.useJWT)(["admin"]), (0, _SafeRequest.safeRequest)(async (req, res) => {
+  const {
+    eventId
+  } = V.validate({
+    eventId: V.string
+  }, req.body);
+  const {
+    attendees
+  } = await _eventsController.default.getEventById(eventId);
+  const radom_atendee = attendees[Math.round(Math.random() * attendees.length)];
+  const atendeeData = await _userController.default.getUserById(radom_atendee);
+  return atendeeData;
+}));
+EventsRouter.post("/confirm_atendees", (0, _JWT.useJWT)(["admin"]), (0, _SafeRequest.safeRequest)(async (req, res) => {
+  const {
+    eventId
+  } = V.validate({
+    eventId: V.string
+  }, req.body);
+  const {
+    attendees
+  } = await _eventsController.default.getEventById(eventId);
+  const result = await Promise.all(attendees.map(id => {
+    _userController.default.updateUser(id, {
+      confirmed: true
+    });
+  }));
+  return {
+    success: true,
+    attendees: attendees.length
+  };
 }));
 var _default = exports.default = EventsRouter;
 //# sourceMappingURL=Events.js.map

@@ -13,6 +13,7 @@ import { eventCofirmationCryptoService } from "../Util/crypto-service";
 import userController from "../database/controllers/userController";
 import { useHMAC } from "../JWT/verifyHMAC";
 import { sendConfirmationMessage } from "../Kozz-Module/Methods/confirmationMessage";
+import { success } from "zod";
 
 const EventsRouter = Router();
 
@@ -53,7 +54,6 @@ EventsRouter.post(
     const { id, data } = V.validate(
       {
         id: V.string,
-        // This should be improved
         data: V.anyObject,
       },
       req.body
@@ -166,5 +166,63 @@ EventsRouter.post(
     res.send({ success: "maybe?" });
   })
 );
+
+EventsRouter.get(
+  "/upcoming",
+  safeRequest(async (req, res) => {
+    const events = await eventsController.getUpcomingEvents();
+
+    console.log({ events });
+
+    return {
+      data: events,
+    };
+  })
+);
+
+EventsRouter.post(
+  "/random_atendee",
+  useJWT(["admin"]),
+  safeRequest(async (req, res) => {
+    const { eventId } = V.validate(
+      {
+        eventId: V.string,
+      },
+      req.body
+    );
+
+    const { attendees } = await eventsController.getEventById(eventId);
+
+    const radom_atendee =
+      attendees[Math.round(Math.random() * attendees.length)];
+
+    const atendeeData = await userController.getUserById(radom_atendee);
+
+    return atendeeData;
+  })
+);
+
+EventsRouter.post(
+  "/confirm_atendees", 
+  useJWT(["admin"]), 
+  safeRequest( async (req, res) =>{
+    const { eventId } = V.validate({
+      eventId: V.string
+    }, req.body);
+
+    const {attendees} = await eventsController.getEventById(eventId);
+
+    const result = await Promise.all(attendees.map(id => {
+      userController.updateUser(id, {
+        confirmed: true,
+      })
+    }));
+
+    return {
+      success: true,
+      attendees: attendees.length,
+    }
+
+}))
 
 export default EventsRouter;

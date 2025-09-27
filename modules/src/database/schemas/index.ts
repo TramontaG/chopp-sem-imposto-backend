@@ -33,6 +33,7 @@ type Event = {
   description: string;
   date: number;
   location: string;
+  invited: string[]; // List of user IDs
   attendees: string[]; // List of user IDs
   interested: string[]; // List of user IDs
   bannerUrl: string | null; // Banner image URL

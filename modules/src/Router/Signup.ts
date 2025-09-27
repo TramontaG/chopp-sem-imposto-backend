@@ -57,7 +57,7 @@ signupRouter.post(
     if (createUserTransaction.success) {
       // TODO: Have to fetch next event and send message accordingly
       // this hardcoded event ID should be removed
-      await sendConfirmationMessage(
+      userController.userInterestedInEvent(
         createUserTransaction.data.id,
         "Chopp sem imposto-062d8617-70c8-4f45-aa5e-e1acaae93f56"
       );
