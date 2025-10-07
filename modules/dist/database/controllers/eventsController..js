@@ -13,6 +13,7 @@ const eventsMemo = (0, _yasms.createMemoService)(undefined, MINUTE_IN_MS);
 const eventsDb = (0, _.default)("event");
 const queries = {
   upcomingEvents: () => eventsDb.createQuery(q => q.where("date", ">", Date.now())),
+  pastEvents: () => eventsDb.createQuery(q => q.where("date", "<", Date.now())),
   allEvents: () => eventsDb.createQuery(q => q.where("deletedAt", "==", null))
 };
 const eventsController = () => {
@@ -59,8 +60,14 @@ const eventsController = () => {
   };
   const assertEventExists = id => eventsMemo.getData(`exists/${id}`, () => eventsDb.entityExists(id)).then(val => val.data);
   const getUpcomingEvents = async () => {
-    const upcomingEvents = await eventsDb.runQuery(queries.allEvents());
+    console.log(Date.now());
+    const upcomingEvents = await eventsDb.runQuery(queries.upcomingEvents());
     return upcomingEvents;
+  };
+  const getPastEvents = async () => {
+    console.log(Date.now());
+    const pastEvents = await eventsDb.runQuery(queries.pastEvents());
+    return pastEvents;
   };
   return {
     createEvent,
@@ -68,7 +75,8 @@ const eventsController = () => {
     updateEvent,
     deleteEvent,
     assertEventExists,
-    getUpcomingEvents
+    getUpcomingEvents,
+    getPastEvents
   };
 };
 var _default = exports.default = eventsController();

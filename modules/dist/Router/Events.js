@@ -14,6 +14,7 @@ var _cryptoService = require("../Util/crypto-service");
 var _userController = _interopRequireDefault(require("../database/controllers/userController"));
 var _verifyHMAC = require("../JWT/verifyHMAC");
 var _confirmationMessage = require("../Kozz-Module/Methods/confirmationMessage");
+var _mimeTypes = _interopRequireDefault(require("mime-types"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 const EventsRouter = (0, _express.Router)();
@@ -49,7 +50,7 @@ EventsRouter.post("/update_event", (0, _JWT.useJWT)(["events_create"]), (0, _Saf
     data
   } = V.validate({
     id: V.string,
-    data: V.anyObject
+    data: V.any
   }, req.body);
   const updateTransaction = await _eventsController.default.updateEvent(id, data);
   return (0, _SafeDatabaseTransaction.safeReturnTransaction)(updateTransaction);
@@ -126,11 +127,14 @@ EventsRouter.post("/send_confirmation_message", (0, _JWT.useJWT)(["admin"]), (0,
     success: "maybe?"
   });
 }));
-EventsRouter.get("/upcoming", (0, _SafeRequest.safeRequest)(async (req, res) => {
+EventsRouter.get("/upcoming", _verifyHMAC.useHMAC, (0, _SafeRequest.safeRequest)(async (req, res) => {
   const events = await _eventsController.default.getUpcomingEvents();
-  console.log({
-    events
-  });
+  return {
+    data: events
+  };
+}));
+EventsRouter.get("/past", _verifyHMAC.useHMAC, (0, _SafeRequest.safeRequest)(async (req, res) => {
+  const events = await _eventsController.default.getPastEvents();
   return {
     data: events
   };
@@ -165,6 +169,46 @@ EventsRouter.post("/confirm_atendees", (0, _JWT.useJWT)(["admin"]), (0, _SafeReq
   return {
     success: true,
     attendees: attendees.length
+  };
+}));
+EventsRouter.get("/atendees", (0, _JWT.useJWT)(["admin"]), (0, _SafeRequest.safeRequest)(async (req, res) => {
+  const {
+    eventId
+  } = V.validate({
+    eventId: V.string
+  }, req.query);
+  const {
+    attendees
+  } = await _eventsController.default.getEventById(eventId);
+  const result = await Promise.all(attendees.map(_userController.default.getUserById));
+  return {
+    success: true,
+    attendees: result.map(user => ({
+      name: user.name,
+      phone: user.phoneNumber
+    }))
+  };
+}));
+EventsRouter.get("/details",
+// useHMAC,
+(0, _SafeRequest.safeRequest)(async (req, res) => {
+  const {
+    id
+  } = V.validate({
+    id: V.string
+  }, req.query);
+  const event = await _eventsController.default.getEventById(id);
+  return {
+    name: event.name,
+    description: event.description,
+    date: event.date,
+    attendees: event.attendees.length,
+    location: event.location,
+    bannerUrl: event.bannerUrl,
+    medias: event.medias.map(name => ({
+      url: name,
+      type: Boolean(_mimeTypes.default.lookup(name)) ? _mimeTypes.default.lookup(name).includes("image") ? "image" : "video" : "unknown"
+    }))
   };
 }));
 var _default = exports.default = EventsRouter;

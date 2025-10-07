@@ -13,7 +13,7 @@ export const safeRequest =
   async (req, res, next) => {
     try {
       const response = await cb(req, res, next);
-      if (res.writable) {
+      if (!res.closed || !res.writable) {
         res.send(response);
       }
     } catch (e: any) {
@@ -66,12 +66,7 @@ export const safeRequest =
               .send({ errorType: "Validation", fields: formattedError });
           }
         }
-      } else {
-        if (res.writable) {
-          res.status(500).send("Unexpected error" + e);
-        }
       }
-
       req.context?.clear();
     }
   };

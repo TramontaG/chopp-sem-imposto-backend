@@ -13,7 +13,7 @@ import { eventCofirmationCryptoService } from "../Util/crypto-service";
 import userController from "../database/controllers/userController";
 import { useHMAC } from "../JWT/verifyHMAC";
 import { sendConfirmationMessage } from "../Kozz-Module/Methods/confirmationMessage";
-import { success } from "zod";
+import mime from "mime-types";
 
 const EventsRouter = Router();
 
@@ -54,7 +54,7 @@ EventsRouter.post(
     const { id, data } = V.validate(
       {
         id: V.string,
-        data: V.anyObject,
+        data: V.any,
       },
       req.body
     );
@@ -169,10 +169,21 @@ EventsRouter.post(
 
 EventsRouter.get(
   "/upcoming",
+  useHMAC,
   safeRequest(async (req, res) => {
     const events = await eventsController.getUpcomingEvents();
 
-    console.log({ events });
+    return {
+      data: events,
+    };
+  })
+);
+
+EventsRouter.get(
+  "/past",
+  useHMAC,
+  safeRequest(async (req, res) => {
+    const events = await eventsController.getPastEvents();
 
     return {
       data: events,
@@ -203,26 +214,89 @@ EventsRouter.post(
 );
 
 EventsRouter.post(
-  "/confirm_atendees", 
-  useJWT(["admin"]), 
-  safeRequest( async (req, res) =>{
-    const { eventId } = V.validate({
-      eventId: V.string
-    }, req.body);
+  "/confirm_atendees",
+  useJWT(["admin"]),
+  safeRequest(async (req, res) => {
+    const { eventId } = V.validate(
+      {
+        eventId: V.string,
+      },
+      req.body
+    );
 
-    const {attendees} = await eventsController.getEventById(eventId);
+    const { attendees } = await eventsController.getEventById(eventId);
 
-    const result = await Promise.all(attendees.map(id => {
-      userController.updateUser(id, {
-        confirmed: true,
+    const result = await Promise.all(
+      attendees.map((id) => {
+        userController.updateUser(id, {
+          confirmed: true,
+        });
       })
-    }));
+    );
 
     return {
       success: true,
       attendees: attendees.length,
-    }
+    };
+  })
+);
 
-}))
+EventsRouter.get(
+  "/atendees",
+  useJWT(["admin"]),
+  safeRequest(async (req, res) => {
+    const { eventId } = V.validate(
+      {
+        eventId: V.string,
+      },
+      req.query as Record<string, string>
+    );
+
+    const { attendees } = await eventsController.getEventById(eventId);
+
+    const result = await Promise.all(attendees.map(userController.getUserById));
+
+    return {
+      success: true,
+      attendees: result.map((user) => ({
+        name: user.name,
+        phone: user.phoneNumber,
+      })),
+    };
+  })
+);
+
+EventsRouter.get(
+  "/details",
+  // useHMAC,
+  safeRequest(async (req, res) => {
+    const { id } = V.validate(
+      {
+        id: V.string,
+      },
+      req.query as Record<string, string>
+    );
+
+    const event = await eventsController.getEventById(id);
+
+    return {
+      name: event.name,
+      description: event.description,
+      date: event.date,
+      attendees: event.attendees.length,
+      location: event.location,
+
+      bannerUrl: event.bannerUrl,
+      medias: event.medias.map((name) => ({
+        url: name,
+        type: Boolean(mime.lookup(name))
+          ? (mime.lookup(name) as string).includes("image")
+            ? "image"
+            : "video"
+          : "unknown",
+      })),
+    };
+  })
+);
 
 export default EventsRouter;

@@ -3,8 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.useHMAC = void 0;
+exports.useHMAC = exports.HMACMiddleware = void 0;
 var _crypto = _interopRequireDefault(require("crypto"));
+var _express = require("express");
+var _ = require(".");
+var _cookieParser = _interopRequireDefault(require("cookie-parser"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 if (!WEBHOOK_SECRET) {
@@ -25,7 +28,16 @@ const verify = (rawBody, ts, header) => {
   // comparação em tempo constante
   return _crypto.default.timingSafeEqual(Buffer.from(sigHex, "hex"), Buffer.from(expected, "hex"));
 };
-const useHMAC = (req, res, next) => {
+const HMACMiddleware = (req, res, next) => {
+  const jwt = req.headers?.authorization || (req.body ?? {}).jwt ||
+  //req.body is undefined when method is GET
+  req.params?.jwt || req.cookies?.jwt;
+  if (jwt) {
+    const verified = (0, _.verifyJwt)(jwt);
+    if (verified) {
+      return next();
+    }
+  }
   const chunks = [];
   req.on("data", c => chunks.push(c));
   req.on("end", () => {
@@ -46,5 +58,6 @@ const useHMAC = (req, res, next) => {
     next();
   });
 };
-exports.useHMAC = useHMAC;
+exports.HMACMiddleware = HMACMiddleware;
+const useHMAC = exports.useHMAC = [(0, _express.json)(), (0, _cookieParser.default)(), HMACMiddleware];
 //# sourceMappingURL=verifyHMAC.js.map

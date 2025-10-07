@@ -1,5 +1,7 @@
 import crypto from "crypto";
-import type { RequestHandler } from "express";
+import { json, type RequestHandler } from "express";
+import { useJWT, verifyJwt } from ".";
+import cookieParser from "cookie-parser";
 
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 if (!WEBHOOK_SECRET) {
@@ -30,7 +32,20 @@ const verify = (rawBody: string, ts: string, header: string) => {
   );
 };
 
-export const useHMAC: RequestHandler = (req, res, next) => {
+export const HMACMiddleware: RequestHandler = (req, res, next) => {
+  const jwt: string =
+    req.headers?.authorization ||
+    (req.body ?? {}).jwt || //req.body is undefined when method is GET
+    req.params?.jwt ||
+    req.cookies?.jwt;
+
+  if (jwt) {
+    const verified = verifyJwt(jwt);
+    if (verified) {
+      return next();
+    }
+  }
+
   const chunks: Buffer[] = [];
   req.on("data", (c) => chunks.push(c));
   req.on("end", () => {
@@ -52,3 +67,5 @@ export const useHMAC: RequestHandler = (req, res, next) => {
     next();
   });
 };
+
+export const useHMAC = [json(), cookieParser(), HMACMiddleware];

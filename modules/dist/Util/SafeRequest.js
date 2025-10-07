@@ -16,7 +16,7 @@ var _axios = require("axios");
 const safeRequest = (cb, showError = false) => async (req, res, next) => {
   try {
     const response = await cb(req, res, next);
-    if (res.writable) {
+    if (!res.closed || !res.writable) {
       res.send(response);
     }
   } catch (e) {
@@ -47,10 +47,6 @@ const safeRequest = (cb, showError = false) => async (req, res, next) => {
             fields: formattedError
           });
         }
-      }
-    } else {
-      if (res.writable) {
-        res.status(500).send("Unexpected error" + e);
       }
     }
     req.context?.clear();
