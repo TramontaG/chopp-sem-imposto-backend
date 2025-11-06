@@ -4,3 +4,6 @@
 [submodule "kozz-gateway"]
 	path = kozz-gateway
 	url = git@github.com:Kozz-Bot/Kozz-Gateway.git
+[submodule "kozz-wa"]
+	path = kozz-wa
+	url = git@github.com:Kozz-Bot/kozz-wa.git

@@ -7,6 +7,7 @@ exports.default = void 0;
 var _yasms = require("yasms");
 var _ = _interopRequireDefault(require(".."));
 var _SafeDatabaseTransaction = require("../../Util/SafeDatabaseTransaction");
+var _firestore = require("firebase-admin/firestore");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const MINUTE_IN_MS = 1000 * 60;
 const eventsMemo = (0, _yasms.createMemoService)(undefined, MINUTE_IN_MS);
@@ -14,7 +15,14 @@ const eventsDb = (0, _.default)("event");
 const queries = {
   upcomingEvents: () => eventsDb.createQuery(q => q.where("date", ">", Date.now())),
   pastEvents: () => eventsDb.createQuery(q => q.where("date", "<", Date.now())),
-  allEvents: () => eventsDb.createQuery(q => q.where("deletedAt", "==", null))
+  allEvents: () => eventsDb.createQuery(q => q.where("deletedAt", "==", null)),
+  todayEvents: () => {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+    return eventsDb.createQuery(q => q.where(_firestore.Filter.and(_firestore.Filter.where("date", ">=", startOfDay.getTime()), _firestore.Filter.where("date", "<=", endOfDay.getTime()))));
+  }
 };
 const eventsController = () => {
   const createEvent = async ({
@@ -60,14 +68,16 @@ const eventsController = () => {
   };
   const assertEventExists = id => eventsMemo.getData(`exists/${id}`, () => eventsDb.entityExists(id)).then(val => val.data);
   const getUpcomingEvents = async () => {
-    console.log(Date.now());
     const upcomingEvents = await eventsDb.runQuery(queries.upcomingEvents());
     return upcomingEvents;
   };
   const getPastEvents = async () => {
-    console.log(Date.now());
     const pastEvents = await eventsDb.runQuery(queries.pastEvents());
     return pastEvents;
+  };
+  const getEventsForToday = async () => {
+    const todayEvents = await eventsDb.runQuery(queries.todayEvents());
+    return todayEvents;
   };
   return {
     createEvent,
@@ -76,7 +86,8 @@ const eventsController = () => {
     deleteEvent,
     assertEventExists,
     getUpcomingEvents,
-    getPastEvents
+    getPastEvents,
+    getEventsForToday
   };
 };
 var _default = exports.default = eventsController();

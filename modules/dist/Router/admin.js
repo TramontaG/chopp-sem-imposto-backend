@@ -13,7 +13,6 @@ var _cookieParser = _interopRequireDefault(require("cookie-parser"));
 var _SafeDatabaseTransaction = require("../Util/SafeDatabaseTransaction");
 var _sanitizeCity = require("../Util/sanitizeCity");
 var _userController = _interopRequireDefault(require("../database/controllers/userController"));
-var _confirmationMessage = require("../Kozz-Module/Methods/confirmationMessage");
 var _eventsController = _interopRequireDefault(require("../database/controllers/eventsController."));
 var _fs = _interopRequireDefault(require("fs"));
 var _KozzModule = _interopRequireDefault(require("../Kozz-Module"));
@@ -138,17 +137,6 @@ adminRouter.post("/sanitize-city", async (req, res) => {
   }));
   res.send(result);
 });
-adminRouter.post("/send_confirmation_message_to_everyone", (0, _JWT.useJWT)(["admin"]), (0, _express.json)(), (0, _SafeRequest.safeRequest)(async req => {
-  const {
-    eventId
-  } = V.validate({
-    eventId: V.string
-  }, req.body);
-  await (0, _confirmationMessage.sendConfirmationMessageToEveryone)(eventId);
-  return {
-    success: true
-  };
-}));
 adminRouter.post("/patch_event", (0, _JWT.useJWT)(["admin"]), (0, _express.json)(), (0, _SafeRequest.safeRequest)(async req => {
   const {
     eventId
@@ -227,7 +215,7 @@ adminRouter.post("/send_to_group", (0, _JWT.useJWT)(["admin"]), (0, _express.jso
     groupName: V.string,
     eventId: V.string
   }, req.body);
-  const group = JSON.parse(_fs.default.readFileSync('src/temp.json', {
+  const group = JSON.parse(_fs.default.readFileSync("src/temp.json", {
     encoding: "utf-8"
   }));
   if (!group) {

@@ -57,11 +57,21 @@ type Host = {
   deletedAt: number | null; //soft delete
 };
 
+export type Suggestion = {
+  id: string;
+  author: string;
+  body: string;
+  createdAt: number;
+  updatedAt: number;
+  deletedAt: number | null; //soft delete
+};
+
 export type AllEntitiesModel = {
   user: User;
   event: Event;
   host: Host;
   admin: Admin;
+  suggestion: Suggestion;
 };
 
 export type EntityTypes = keyof AllEntitiesModel;

@@ -15,6 +15,7 @@ var _userController = _interopRequireDefault(require("../database/controllers/us
 var _verifyHMAC = require("../JWT/verifyHMAC");
 var _confirmationMessage = require("../Kozz-Module/Methods/confirmationMessage");
 var _mimeTypes = _interopRequireDefault(require("mime-types"));
+var _Messages = require("../Kozz-Module/Messages");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 const EventsRouter = (0, _express.Router)();
@@ -114,21 +115,14 @@ EventsRouter.post("/check_payload", (0, _JWT.useJWT)(["admin"]), (0, _SafeReques
     });
   }
 }));
-EventsRouter.post("/send_confirmation_message", (0, _JWT.useJWT)(["admin"]), (0, _SafeRequest.safeRequest)(async (req, res) => {
-  const {
-    userId,
-    eventId
-  } = V.validate({
-    userId: V.string,
-    eventId: V.string
-  }, req.body);
-  const result = await (0, _confirmationMessage.sendConfirmationMessage)(userId, eventId);
-  res.send({
-    success: "maybe?"
-  });
-}));
 EventsRouter.get("/upcoming", _verifyHMAC.useHMAC, (0, _SafeRequest.safeRequest)(async (req, res) => {
   const events = await _eventsController.default.getUpcomingEvents();
+  return {
+    data: events
+  };
+}));
+EventsRouter.get("/today", _verifyHMAC.useHMAC, (0, _SafeRequest.safeRequest)(async (req, res) => {
+  const events = await _eventsController.default.getEventsForToday();
   return {
     data: events
   };
@@ -210,6 +204,21 @@ EventsRouter.get("/details",
       type: Boolean(_mimeTypes.default.lookup(name)) ? _mimeTypes.default.lookup(name).includes("image") ? "image" : "video" : "unknown"
     }))
   };
+}));
+EventsRouter.post("/invite_confirmed", (0, _JWT.useJWT)(["admin"]), (0, _express.json)(), (0, _SafeRequest.safeRequest)(async (req, res) => {
+  const allConfirmedUsers = await _userController.default.getAllUsers(true);
+  const allConfirmedContacts = allConfirmedUsers.map(user => {
+    const sanitizedPhone = `55${user.phoneNumber.replace(/[\D]/g, "")}`;
+    const contactId = `${sanitizedPhone}@s.whatsapp.net`;
+    return [user.name, contactId];
+  });
+  const messages = [_Messages.eventConfirmation1, _Messages.eventConfirmation2, _Messages.eventConfirmation3, _Messages.eventConfirmation4];
+  const postMessages = [_Messages.inviteFriendMessage1, _Messages.inviteFriendMessage2, _Messages.inviteFriendMessage3];
+  (0, _confirmationMessage.sendMessageToContactList)({
+    contacts: allConfirmedContacts,
+    messages: messages,
+    post_messages: postMessages
+  });
 }));
 var _default = exports.default = EventsRouter;
 //# sourceMappingURL=Events.js.map

@@ -10,7 +10,8 @@ import {
   transactionError,
   transactionSuccess,
 } from "../../Util/SafeDatabaseTransaction";
-import { date } from "zod";
+import { Filter } from "firebase-admin/firestore";
+import { query } from "express";
 
 const MINUTE_IN_MS = 1000 * 60;
 const eventsMemo = createMemoService(undefined, MINUTE_IN_MS);
@@ -23,6 +24,21 @@ const queries = {
     eventsDb.createQuery((q) => q.where("date", "<", Date.now())),
   allEvents: () =>
     eventsDb.createQuery((q) => q.where("deletedAt", "==", null)),
+  todayEvents: () => {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return eventsDb.createQuery((q) =>
+      q.where(
+        Filter.and(
+          Filter.where("date", ">=", startOfDay.getTime()),
+          Filter.where("date", "<=", endOfDay.getTime())
+        )
+      )
+    );
+  },
 };
 
 const eventsController = () => {
@@ -93,16 +109,18 @@ const eventsController = () => {
       .then((val) => val.data);
 
   const getUpcomingEvents = async () => {
-    console.log(Date.now());
-
     const upcomingEvents = await eventsDb.runQuery(queries.upcomingEvents());
     return upcomingEvents;
   };
 
   const getPastEvents = async () => {
-    console.log(Date.now());
     const pastEvents = await eventsDb.runQuery(queries.pastEvents());
     return pastEvents;
+  };
+
+  const getEventsForToday = async () => {
+    const todayEvents = await eventsDb.runQuery(queries.todayEvents());
+    return todayEvents;
   };
 
   return {
@@ -113,6 +131,7 @@ const eventsController = () => {
     assertEventExists,
     getUpcomingEvents,
     getPastEvents,
+    getEventsForToday,
   };
 };
 

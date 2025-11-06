@@ -12,8 +12,17 @@ import type { DatabaseFriendlyEntityModel } from "../database/schemas";
 import { eventCofirmationCryptoService } from "../Util/crypto-service";
 import userController from "../database/controllers/userController";
 import { useHMAC } from "../JWT/verifyHMAC";
-import { sendConfirmationMessage } from "../Kozz-Module/Methods/confirmationMessage";
+import { sendMessageToContactList } from "../Kozz-Module/Methods/confirmationMessage";
 import mime from "mime-types";
+import {
+  eventConfirmation1,
+  eventConfirmation2,
+  eventConfirmation3,
+  eventConfirmation4,
+  inviteFriendMessage1,
+  inviteFriendMessage2,
+  inviteFriendMessage3,
+} from "../Kozz-Module/Messages";
 
 const EventsRouter = Router();
 
@@ -149,30 +158,22 @@ EventsRouter.post(
   })
 );
 
-EventsRouter.post(
-  "/send_confirmation_message",
-  useJWT(["admin"]),
-  safeRequest(async (req, res) => {
-    const { userId, eventId } = V.validate(
-      {
-        userId: V.string,
-        eventId: V.string,
-      },
-      req.body
-    );
-
-    const result = await sendConfirmationMessage(userId, eventId);
-
-    res.send({ success: "maybe?" });
-  })
-);
-
 EventsRouter.get(
   "/upcoming",
   useHMAC,
   safeRequest(async (req, res) => {
     const events = await eventsController.getUpcomingEvents();
+    return {
+      data: events,
+    };
+  })
+);
 
+EventsRouter.get(
+  "/today",
+  useHMAC,
+  safeRequest(async (req, res) => {
+    const events = await eventsController.getEventsForToday();
     return {
       data: events,
     };
@@ -296,6 +297,40 @@ EventsRouter.get(
           : "unknown",
       })),
     };
+  })
+);
+
+EventsRouter.post(
+  "/invite_confirmed",
+  useJWT(["admin"]),
+  json(),
+  safeRequest(async (req, res) => {
+    const allConfirmedUsers = await userController.getAllUsers(true);
+
+    const allConfirmedContacts = allConfirmedUsers.map((user) => {
+      const sanitizedPhone = `55${user.phoneNumber.replace(/[\D]/g, "")}`;
+      const contactId = `${sanitizedPhone}@s.whatsapp.net`;
+      return [user.name, contactId] as const;
+    });
+
+    const messages = [
+      eventConfirmation1,
+      eventConfirmation2,
+      eventConfirmation3,
+      eventConfirmation4,
+    ];
+
+    const postMessages = [
+      inviteFriendMessage1,
+      inviteFriendMessage2,
+      inviteFriendMessage3,
+    ];
+
+    sendMessageToContactList({
+      contacts: allConfirmedContacts,
+      messages: messages,
+      post_messages: postMessages,
+    });
   })
 );
 

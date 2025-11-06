@@ -1,105 +1,90 @@
 import { Bold, Line } from "kozz-module-maker";
 
-/**
- * Gets only the first name and proper capitalizes it
- * @param name
- * @returns
- */
 const formatName = (name: string) => {
   const firstName = name.split(" ")[0];
 
-  return (
-    firstName.charAt(0).toUpperCase() + //first letter to upercase
-    firstName.slice(1).toLowerCase() // rest of the first name in lower case
-  );
+  return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
 };
 
-export const eventConfirmation1 = ({
-  name,
-  link,
-}: {
-  name: string;
-  link: string;
-}) => {
+export const eventConfirmation1 = ({ name }: { name: string }) => {
   return (
     <>
-      <Line>Oi {formatName(name)}, Mateus aqui!</Line>
       <Line>
-        Estou enviando essa mensagem para te fazer um convite! Dia{" "}
-        <Bold>25/09</Bold> teremos mais uma edição do Chopp Sem Imposto, na Van
-        Been Tap House - Vila Mariana às 19hrs.
+        Bom dia {formatName(name)}! Mateus aqui pra te convidar pra mais um
+        <Bold>Chopp sem imposto! 🍻</Bold>
+      </Line>
+      <Line>
+        Vai rolar dia <Bold>06/11 às 19h</Bold>, lá na Van Been Tap House - Rua
+        Joaquim Távora, 1039
+      </Line>
+      <Line>
+        Mesmo esquema de sempre: boa cerveja, boa conversa e preço sem imposto
       </Line>
       <Line />
-      <Line>
-        <Bold>Confirme a presença no link e garanta seu desconto</Bold>
-      </Line>
-      <Line>
-        Não bebe? Ainda assim vale participar e levar amigos! Nos vemos lá? 🍻
-      </Line>
-      <Line />
-      <Line>{link}</Line>
+      <Line>Me dá um ok! e eu já ativo o seu desconto!</Line>
     </>
   );
 };
 
-export const eventConfirmation2 = ({
-  name,
-  link,
-}: {
-  name: string;
-  link: string;
-}) => {
+export const eventConfirmation2 = ({ name }: { name: string }) => {
   return (
     <>
-      <Line>Oi {formatName(name)}, aqui é o Mateus</Line>
+      <Line>Fala {formatName(name)}! Aqui é o Mateus</Line>
       <Line>
-        Quero te convidar para mais um evento! No dia <Bold>25/09</Bold>, às
-        19h, vai rolar mais uma edição do Chopp Sem Imposto na Van Been Tap
-        House - Vila Mariana.
+        Tô passando pra te avisar que vem aí mais um{" "}
+        <Bold>Chopp sem imposto 🍺</Bold>
       </Line>
+      <Line>
+        Dia <Bold>06/11 às 19h</Bold> na Van Been Tap House, Rua Joaquim Távora,
+        1039
+      </Line>
+      <Line>Se curtiu os últimos, esse vai ser melhor ainda!</Line>
       <Line />
       <Line>
-        <Bold>Já garantiu sua inscrição? É só clickar no link!</Bold>
-      </Line>
-      <Line>
-        Mesmo quem não bebe pode participar e chamar amigos. Vai ser demais,
-        espero você lá! 🍻
+        Te espero lá! Responde aqui que eu já ativo o desconto pra vc!
       </Line>
       <Line />
-      <Line>{link}</Line>
     </>
   );
 };
 
-export const eventConfirmation3 = ({
-  name,
-  link,
-}: {
-  name: string;
-  link: string;
-}) => {
+export const eventConfirmation3 = ({ name }: { name: string }) => {
   return (
     <>
       <Line>
-        Olá {formatName(name)}, Mateus passando pra te lembrar de mais um
-        evento!
+        Iae {formatName(name)}! Mateus aqui para te avisar que tá confirmado o
+        próximo <Bold>Chopp sem imposto!</Bold>
       </Line>
       <Line>
-        Na quinta, <Bold>25/09</Bold>, às 19h, teremos o Chopp Sem Imposto na
-        Van Been Tap House - Vila Mariana.
+        Vai ser dia <Bold>06/11 às 19h</Bold> na Van Been Tap House - R. Joaquim
+        Távora, 1039
+      </Line>
+      <Line>
+        Aquela vibe de sempre: cerveja top, sem imposto e muita resenha
       </Line>
       <Line />
       <Line>
-        <Bold>
-          Confirme sua participação no site para garantir seu desconto
-        </Bold>
-      </Line>
-      <Line>
-        Mesmo sem beber, vale ir, curtir o ambiente, chamar amigos e trocar
-        ideias. Bora?
+        Bora de novo? Me dá um “tô dentro” aqui na mensagem que eu já te coloco
+        na lista e ativo seu desconto 🍻
       </Line>
       <Line />
-      <Line>Confirme sua participação no link: {link}</Line>
+    </>
+  );
+};
+
+export const eventConfirmation4 = ({ name }: { name: string }) => {
+  return (
+    <>
+      <Line>Oii {formatName(name)}, tudo certo? Mateus aqui</Line>
+      <Line>
+        Já pode marcar na agenda: <Bold>Chopp sem imposto</Bold> dia{" "}
+        <Bold>06/11 às 19h</Bold> na Van Been Tap House, Rua Joaquim Távora,
+        1039
+      </Line>
+      <Line>Os últimos foram sucesso, quer garantir o desconto?</Line>
+      <Line />
+      <Line>É só responder aqui que eu já ativo teu desconto! 🍺</Line>
+      <Line />
     </>
   );
 };

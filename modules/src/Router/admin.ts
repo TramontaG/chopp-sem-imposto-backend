@@ -13,9 +13,8 @@ import {
 } from "../Util/SafeDatabaseTransaction";
 import { dryRunNormalizeCities } from "../Util/sanitizeCity";
 import userController from "../database/controllers/userController";
-import { sendConfirmationMessageToEveryone } from "../Kozz-Module/Methods/confirmationMessage";
 import eventsController from "../database/controllers/eventsController.";
-import fs from 'fs';
+import fs from "fs";
 import module from "../Kozz-Module";
 import type { GroupChat, GroupChatData } from "kozz-types";
 import {
@@ -205,21 +204,6 @@ adminRouter.post("/sanitize-city", async (req, res) => {
 });
 
 adminRouter.post(
-  "/send_confirmation_message_to_everyone",
-  useJWT(["admin"]),
-  json(),
-  safeRequest(async (req) => {
-    const { eventId } = V.validate({ eventId: V.string }, req.body);
-
-    await sendConfirmationMessageToEveryone(eventId);
-
-    return {
-      success: true,
-    };
-  })
-);
-
-adminRouter.post(
   "/patch_event",
   useJWT(["admin"]),
   json(),
@@ -337,7 +321,9 @@ adminRouter.post(
       req.body
     );
 
-    const group: GroupChat | undefined = JSON.parse(fs.readFileSync('src/temp.json', {encoding: "utf-8"}))
+    const group: GroupChat | undefined = JSON.parse(
+      fs.readFileSync("src/temp.json", { encoding: "utf-8" })
+    );
 
     if (!group) {
       return transactionError(FAIL_REASONS.NOT_FOUND);
@@ -349,7 +335,9 @@ adminRouter.post(
       return transactionError(FAIL_REASONS.NOT_FOUND);
     }
 
-    const allUsers = await userController.getUsersByOrigin(`whatsapp-${groupName}`);
+    const allUsers = await userController.getUsersByOrigin(
+      `whatsapp-${groupName}`
+    );
 
     const phoneToUser = new Map<string, WithID<"user">>();
     for (const u of allUsers) {

@@ -1,5 +1,4 @@
-import { Query } from "firebase-admin/firestore";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, Query } from "firebase-admin/firestore";
 import type {
   DatabaseFriendlyEntityModel,
   EntityTypes,
@@ -16,7 +15,7 @@ export const DbManager = <EntityType extends EntityTypes>(
 
   const upsertEntity = (
     id: string,
-    data: Partial<DatabaseFriendlyEntityModel<"user">>
+    data: Partial<DatabaseFriendlyEntityModel<EntityType>>
   ) => {
     return dbCollection.doc(id).set(
       {
@@ -38,6 +37,7 @@ export const DbManager = <EntityType extends EntityTypes>(
   };
 
   const deleteEntity = (id: string) => {
+    // @ts-ignore IDK why TS is complaining about this
     return upsertEntity(id, {
       deletedAt: Date.now(),
     });

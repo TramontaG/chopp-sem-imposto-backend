@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { json, type RequestHandler } from "express";
+import { json, raw, type RequestHandler } from "express";
 import { useJWT, verifyJwt } from ".";
 import cookieParser from "cookie-parser";
 
@@ -34,10 +34,7 @@ const verify = (rawBody: string, ts: string, header: string) => {
 
 export const HMACMiddleware: RequestHandler = (req, res, next) => {
   const jwt: string =
-    req.headers?.authorization ||
-    (req.body ?? {}).jwt || //req.body is undefined when method is GET
-    req.params?.jwt ||
-    req.cookies?.jwt;
+    req.headers?.authorization || req.params?.jwt || req.cookies?.jwt;
 
   if (jwt) {
     const verified = verifyJwt(jwt);
@@ -59,8 +56,11 @@ export const HMACMiddleware: RequestHandler = (req, res, next) => {
     const ts = req.header("X-Timestamp") || "";
 
     const raw = (req as any).rawBody?.toString("utf8") || "no-body";
+    const hmacValid = verify(raw, ts, sig);
 
-    if (!verify(raw, ts, sig)) {
+    console.log({ hmacValid, raw, ts, sig }); // debug only, remove in production
+
+    if (!hmacValid) {
       return res.status(401).json({ error: "Invalid signature or timestamp" });
     }
 
@@ -68,4 +68,4 @@ export const HMACMiddleware: RequestHandler = (req, res, next) => {
   });
 };
 
-export const useHMAC = [json(), cookieParser(), HMACMiddleware];
+export const useHMAC = [cookieParser(), HMACMiddleware];

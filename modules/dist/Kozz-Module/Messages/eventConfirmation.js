@@ -3,89 +3,95 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.inviteFriendMessage3 = exports.inviteFriendMessage2 = exports.inviteFriendMessage1 = exports.eventConfirmation3 = exports.eventConfirmation2 = exports.eventConfirmation1 = void 0;
+exports.inviteFriendMessage3 = exports.inviteFriendMessage2 = exports.inviteFriendMessage1 = exports.eventConfirmation4 = exports.eventConfirmation3 = exports.eventConfirmation2 = exports.eventConfirmation1 = void 0;
 var _kozzModuleMaker = require("kozz-module-maker");
 var _jsxRuntime = require("kozz-module-maker/dist/jsx-runtime");
-/**
- * Gets only the first name and proper capitalizes it
- * @param name
- * @returns
- */const formatName = name => {
+const formatName = name => {
   const firstName = name.split(" ")[0];
-  return firstName.charAt(0).toUpperCase() +
-  //first letter to upercase
-  firstName.slice(1).toLowerCase() // rest of the first name in lower case
-  ;
+  return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
 };
 const eventConfirmation1 = ({
-  name,
-  link
+  name
 }) => {
   return (0, _jsxRuntime.jsxs)(_jsxRuntime.Fragment, {
     children: [(0, _jsxRuntime.jsxs)(_kozzModuleMaker.Line, {
-      children: ["Oi ", formatName(name), ", Mateus aqui!"]
+      children: ["Bom dia ", formatName(name), "! Mateus aqui pra te convidar pra mais um", (0, _jsxRuntime.jsx)(_kozzModuleMaker.Bold, {
+        children: "Chopp sem imposto! \uD83C\uDF7B"
+      })]
     }), (0, _jsxRuntime.jsxs)(_kozzModuleMaker.Line, {
-      children: ["Estou enviando essa mensagem para te fazer um convite! Dia", " ", (0, _jsxRuntime.jsx)(_kozzModuleMaker.Bold, {
-        children: "25/09"
-      }), " teremos mais uma edi\xE7\xE3o do Chopp Sem Imposto, na Van Been Tap House - Vila Mariana \xE0s 19hrs."]
-    }), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {}), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {
-      children: (0, _jsxRuntime.jsx)(_kozzModuleMaker.Bold, {
-        children: "Confirme a presen\xE7a no link e garanta seu desconto"
-      })
+      children: ["Vai rolar dia ", (0, _jsxRuntime.jsx)(_kozzModuleMaker.Bold, {
+        children: "06/11 \xE0s 19h"
+      }), ", l\xE1 na Van Been Tap House - Rua Joaquim T\xE1vora, 1039"]
     }), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {
-      children: "N\xE3o bebe? Ainda assim vale participar e levar amigos! Nos vemos l\xE1? \uD83C\uDF7B"
+      children: "Mesmo esquema de sempre: boa cerveja, boa conversa e pre\xE7o sem imposto"
     }), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {}), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {
-      children: link
+      children: "Me d\xE1 um ok! e eu j\xE1 ativo o seu desconto!"
     })]
   });
 };
 exports.eventConfirmation1 = eventConfirmation1;
 const eventConfirmation2 = ({
-  name,
-  link
+  name
 }) => {
   return (0, _jsxRuntime.jsxs)(_jsxRuntime.Fragment, {
     children: [(0, _jsxRuntime.jsxs)(_kozzModuleMaker.Line, {
-      children: ["Oi ", formatName(name), ", aqui \xE9 o Mateus"]
+      children: ["Fala ", formatName(name), "! Aqui \xE9 o Mateus"]
     }), (0, _jsxRuntime.jsxs)(_kozzModuleMaker.Line, {
-      children: ["Quero te convidar para mais um evento! No dia ", (0, _jsxRuntime.jsx)(_kozzModuleMaker.Bold, {
-        children: "25/09"
-      }), ", \xE0s 19h, vai rolar mais uma edi\xE7\xE3o do Chopp Sem Imposto na Van Been Tap House - Vila Mariana."]
-    }), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {}), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {
-      children: (0, _jsxRuntime.jsx)(_kozzModuleMaker.Bold, {
-        children: "J\xE1 garantiu sua inscri\xE7\xE3o? \xC9 s\xF3 clickar no link!"
-      })
+      children: ["T\xF4 passando pra te avisar que vem a\xED mais um", " ", (0, _jsxRuntime.jsx)(_kozzModuleMaker.Bold, {
+        children: "Chopp sem imposto \uD83C\uDF7A"
+      })]
+    }), (0, _jsxRuntime.jsxs)(_kozzModuleMaker.Line, {
+      children: ["Dia ", (0, _jsxRuntime.jsx)(_kozzModuleMaker.Bold, {
+        children: "06/11 \xE0s 19h"
+      }), " na Van Been Tap House, Rua Joaquim T\xE1vora, 1039"]
     }), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {
-      children: "Mesmo quem n\xE3o bebe pode participar e chamar amigos. Vai ser demais, espero voc\xEA l\xE1! \uD83C\uDF7B"
+      children: "Se curtiu os \xFAltimos, esse vai ser melhor ainda!"
     }), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {}), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {
-      children: link
-    })]
+      children: "Te espero l\xE1! Responde aqui que eu j\xE1 ativo o desconto pra vc!"
+    }), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {})]
   });
 };
 exports.eventConfirmation2 = eventConfirmation2;
 const eventConfirmation3 = ({
-  name,
-  link
+  name
 }) => {
   return (0, _jsxRuntime.jsxs)(_jsxRuntime.Fragment, {
     children: [(0, _jsxRuntime.jsxs)(_kozzModuleMaker.Line, {
-      children: ["Ol\xE1 ", formatName(name), ", Mateus passando pra te lembrar de mais um evento!"]
+      children: ["Iae ", formatName(name), "! Mateus aqui para te avisar que t\xE1 confirmado o pr\xF3ximo ", (0, _jsxRuntime.jsx)(_kozzModuleMaker.Bold, {
+        children: "Chopp sem imposto!"
+      })]
     }), (0, _jsxRuntime.jsxs)(_kozzModuleMaker.Line, {
-      children: ["Na quinta, ", (0, _jsxRuntime.jsx)(_kozzModuleMaker.Bold, {
-        children: "25/09"
-      }), ", \xE0s 19h, teremos o Chopp Sem Imposto na Van Been Tap House - Vila Mariana."]
-    }), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {}), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {
-      children: (0, _jsxRuntime.jsx)(_kozzModuleMaker.Bold, {
-        children: "Confirme sua participa\xE7\xE3o no site para garantir seu desconto"
-      })
+      children: ["Vai ser dia ", (0, _jsxRuntime.jsx)(_kozzModuleMaker.Bold, {
+        children: "06/11 \xE0s 19h"
+      }), " na Van Been Tap House - R. Joaquim T\xE1vora, 1039"]
     }), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {
-      children: "Mesmo sem beber, vale ir, curtir o ambiente, chamar amigos e trocar ideias. Bora?"
-    }), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {}), (0, _jsxRuntime.jsxs)(_kozzModuleMaker.Line, {
-      children: ["Confirme sua participa\xE7\xE3o no link: ", link]
-    })]
+      children: "Aquela vibe de sempre: cerveja top, sem imposto e muita resenha"
+    }), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {}), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {
+      children: "Bora de novo? Me d\xE1 um \u201Ct\xF4 dentro\u201D aqui na mensagem que eu j\xE1 te coloco na lista e ativo seu desconto \uD83C\uDF7B"
+    }), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {})]
   });
 };
 exports.eventConfirmation3 = eventConfirmation3;
+const eventConfirmation4 = ({
+  name
+}) => {
+  return (0, _jsxRuntime.jsxs)(_jsxRuntime.Fragment, {
+    children: [(0, _jsxRuntime.jsxs)(_kozzModuleMaker.Line, {
+      children: ["Oii ", formatName(name), ", tudo certo? Mateus aqui"]
+    }), (0, _jsxRuntime.jsxs)(_kozzModuleMaker.Line, {
+      children: ["J\xE1 pode marcar na agenda: ", (0, _jsxRuntime.jsx)(_kozzModuleMaker.Bold, {
+        children: "Chopp sem imposto"
+      }), " dia", " ", (0, _jsxRuntime.jsx)(_kozzModuleMaker.Bold, {
+        children: "06/11 \xE0s 19h"
+      }), " na Van Been Tap House, Rua Joaquim T\xE1vora, 1039"]
+    }), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {
+      children: "Os \xFAltimos foram sucesso, quer garantir o desconto?"
+    }), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {}), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {
+      children: "\xC9 s\xF3 responder aqui que eu j\xE1 ativo teu desconto! \uD83C\uDF7A"
+    }), (0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {})]
+  });
+};
+exports.eventConfirmation4 = eventConfirmation4;
 const inviteFriendMessage1 = () => {
   return (0, _jsxRuntime.jsxs)(_jsxRuntime.Fragment, {
     children: [(0, _jsxRuntime.jsx)(_kozzModuleMaker.Line, {

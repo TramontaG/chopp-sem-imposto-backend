@@ -21,7 +21,7 @@ const userMemo = (0, _yasms.createMemoService)(undefined, MINUTE_IN_MS);
 const userDB = (0, _.default)("user");
 const queries = {
   filterByPhoneNumber: phoneNumber => {
-    return userDB.createQuery(q => q.where("phoneNumber", "==", phoneNumber).where("deletedAt", "==", null));
+    return userDB.createQuery(q => q.where(_firestore.Filter.and(_firestore.Filter.where("phoneNumber", "==", phoneNumber), _firestore.Filter.where("deletedAt", "==", null))));
   },
   filterByIds: ids => {
     return userDB.createQuery(q => q.where("id", "in", ids));
@@ -30,7 +30,7 @@ const queries = {
     return userDB.createQuery(q => q.where("deletedAt", "==", null));
   },
   getAllConfirmed: () => {
-    return userDB.createQuery(q => q.where("confirmed", "==", true).where("deletedAt", "==", null));
+    return userDB.createQuery(q => q.where(_firestore.Filter.and(_firestore.Filter.where("deletedAt", "==", null), _firestore.Filter.where("confirmed", "==", true))));
   },
   getByOrigin: origin => {
     return userDB.createQuery(q => q.where("source", "==", origin)).where("deletedAt", "==", null);
@@ -135,8 +135,8 @@ const userManager = () => {
       });
     }
   };
-  const getAllUsers = async () => {
-    const data = await userDB.runQuery(queries.getAll());
+  const getAllUsers = async confirmed => {
+    const data = await userDB.runQuery(confirmed ? queries.getAllConfirmed() : queries.getAll());
     return data;
   };
   const updateUser = async (id, data) => {
@@ -172,7 +172,7 @@ const userManager = () => {
     return results.length === 0;
   };
   const getUserByPhoneNumber = async phoneNumber => {
-    const results = await userMemo.getData(`queryphone-${phoneNumber}`, () => userDB.runQuery(queries.filterByPhoneNumber(phoneNumber))).then(val => val.data);
+    const results = await userDB.runQuery(queries.filterByPhoneNumber(phoneNumber));
     return results[0];
   };
   const userAttendToEvent = async (userId, eventId) => {

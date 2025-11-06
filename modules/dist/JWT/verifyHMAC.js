@@ -5,7 +5,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.useHMAC = exports.HMACMiddleware = void 0;
 var _crypto = _interopRequireDefault(require("crypto"));
-var _express = require("express");
 var _ = require(".");
 var _cookieParser = _interopRequireDefault(require("cookie-parser"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
@@ -29,9 +28,7 @@ const verify = (rawBody, ts, header) => {
   return _crypto.default.timingSafeEqual(Buffer.from(sigHex, "hex"), Buffer.from(expected, "hex"));
 };
 const HMACMiddleware = (req, res, next) => {
-  const jwt = req.headers?.authorization || (req.body ?? {}).jwt ||
-  //req.body is undefined when method is GET
-  req.params?.jwt || req.cookies?.jwt;
+  const jwt = req.headers?.authorization || req.params?.jwt || req.cookies?.jwt;
   if (jwt) {
     const verified = (0, _.verifyJwt)(jwt);
     if (verified) {
@@ -50,7 +47,15 @@ const HMACMiddleware = (req, res, next) => {
     const sig = req.header("X-Signature") || "";
     const ts = req.header("X-Timestamp") || "";
     const raw = req.rawBody?.toString("utf8") || "no-body";
-    if (!verify(raw, ts, sig)) {
+    const hmacValid = verify(raw, ts, sig);
+    console.log({
+      hmacValid,
+      raw,
+      ts,
+      sig
+    }); // debug only, remove in production
+
+    if (!hmacValid) {
       return res.status(401).json({
         error: "Invalid signature or timestamp"
       });
@@ -59,5 +64,5 @@ const HMACMiddleware = (req, res, next) => {
   });
 };
 exports.HMACMiddleware = HMACMiddleware;
-const useHMAC = exports.useHMAC = [(0, _express.json)(), (0, _cookieParser.default)(), HMACMiddleware];
+const useHMAC = exports.useHMAC = [(0, _cookieParser.default)(), HMACMiddleware];
 //# sourceMappingURL=verifyHMAC.js.map

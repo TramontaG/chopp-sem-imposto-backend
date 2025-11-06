@@ -4,13 +4,11 @@ import { safeRequest } from "../Util/SafeRequest";
 import userController from "../database/controllers/userController";
 import {
   FAIL_REASONS,
-  isTransactionSuccessful,
   safeReturnTransaction,
   transactionError,
 } from "../Util/SafeDatabaseTransaction";
 import * as V from "../Util/ZodValidation";
 import { useJWT } from "../JWT";
-import { json, success } from "zod";
 import type { WithID } from "../database/schemas";
 import { parseDateBR } from "../Util/Date";
 
@@ -20,7 +18,6 @@ UserRouter.get(
   "/total",
   useHMAC,
   safeRequest(async (req, res) => {
-    
     const { confirmed } = V.validate(
       { confirmed: V.booleanAsString.optional() },
       req.query as Record<string, string>
@@ -148,6 +145,59 @@ UserRouter.post(
     );
 
     return safeReturnTransaction(checkInTransaction);
+  })
+);
+
+UserRouter.get(
+  "/all_confirmed",
+  useJWT(["admin"]),
+  safeRequest(async (req, res) => {
+    const contentType = req.headers["content-type"];
+    const allConfirmedUsers = await userController.getAllUsers(true);
+
+    if (contentType === "text/csv") {
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=confirmed_users.csv"
+      );
+
+      const csvRows = [];
+      csvRows.push(
+        [
+          "ID",
+          "Name",
+          "Phone Number",
+          "City",
+          "DOB",
+          "Sex",
+          "Neighborhood",
+          "Profession",
+          "Source",
+          "Confirmed",
+        ].join(",")
+      );
+
+      allConfirmedUsers.forEach((user) => {
+        const row = [
+          user.id,
+          `"${user.name}"`,
+          user.phoneNumber,
+          `"${user.city}"`,
+          user.DOB ? new Date(user.DOB).toLocaleDateString("pt-BR") : "",
+          user.sex || "",
+          user.neighborhood ? `"${user.neighborhood}"` : "",
+          user.profession ? `"${user.profession}"` : "",
+          user.source || "",
+          user.confirmed ? "Yes" : "No",
+        ];
+        csvRows.push(row.join(","));
+      });
+
+      return csvRows.join("\n");
+    }
+
+    return allConfirmedUsers;
   })
 );
 

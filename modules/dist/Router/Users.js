@@ -106,5 +106,21 @@ UserRouter.post("/check_in", (0, _JWT.useJWT)(["admin"]), (0, _SafeRequest.safeR
   const checkInTransaction = await _userController.default.userAttendToEvent(userId, eventId);
   return (0, _SafeDatabaseTransaction.safeReturnTransaction)(checkInTransaction);
 }));
+UserRouter.get("/all_confirmed", (0, _JWT.useJWT)(["admin"]), (0, _SafeRequest.safeRequest)(async (req, res) => {
+  const contentType = req.headers["content-type"];
+  const allConfirmedUsers = await _userController.default.getAllUsers(true);
+  if (contentType === "text/csv") {
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=confirmed_users.csv");
+    const csvRows = [];
+    csvRows.push(["ID", "Name", "Phone Number", "City", "DOB", "Sex", "Neighborhood", "Profession", "Source", "Confirmed"].join(","));
+    allConfirmedUsers.forEach(user => {
+      const row = [user.id, `"${user.name}"`, user.phoneNumber, `"${user.city}"`, user.DOB ? new Date(user.DOB).toLocaleDateString("pt-BR") : "", user.sex || "", user.neighborhood ? `"${user.neighborhood}"` : "", user.profession ? `"${user.profession}"` : "", user.source || "", user.confirmed ? "Yes" : "No"];
+      csvRows.push(row.join(","));
+    });
+    return csvRows.join("\n");
+  }
+  return allConfirmedUsers;
+}));
 var _default = exports.default = UserRouter;
 //# sourceMappingURL=Users.js.map

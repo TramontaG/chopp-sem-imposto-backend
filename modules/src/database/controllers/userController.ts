@@ -1,4 +1,4 @@
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Filter } from "firebase-admin/firestore";
 import DbManager from "..";
 import type {
   AllEntitiesModel,
@@ -13,7 +13,6 @@ import {
   transactionSuccess,
 } from "../../Util/SafeDatabaseTransaction";
 import { eventCofirmationCryptoService } from "../../Util/crypto-service";
-import { success } from "zod";
 
 const MINUTE_IN_MS = 1000 * 60;
 const userMemo = createMemoService(undefined, MINUTE_IN_MS);
@@ -22,7 +21,12 @@ const userDB = DbManager("user");
 const queries = {
   filterByPhoneNumber: (phoneNumber: string) => {
     return userDB.createQuery((q) =>
-      q.where("phoneNumber", "==", phoneNumber).where("deletedAt", "==", null)
+      q.where(
+        Filter.and(
+          Filter.where("phoneNumber", "==", phoneNumber),
+          Filter.where("deletedAt", "==", null)
+        )
+      )
     );
   },
   filterByIds: (ids: string[]) => {
@@ -33,7 +37,12 @@ const queries = {
   },
   getAllConfirmed: () => {
     return userDB.createQuery((q) =>
-      q.where("confirmed", "==", true).where("deletedAt", "==", null)
+      q.where(
+        Filter.and(
+          Filter.where("deletedAt", "==", null),
+          Filter.where("confirmed", "==", true)
+        )
+      )
     );
   },
   getByOrigin: (origin: string) => {
@@ -160,8 +169,10 @@ const userManager = () => {
     }
   };
 
-  const getAllUsers = async () => {
-    const data = await userDB.runQuery(queries.getAll());
+  const getAllUsers = async (confirmed?: boolean) => {
+    const data = await userDB.runQuery(
+      confirmed ? queries.getAllConfirmed() : queries.getAll()
+    );
     return data;
   };
 
@@ -219,11 +230,9 @@ const userManager = () => {
   };
 
   const getUserByPhoneNumber = async (phoneNumber: string) => {
-    const results: WithID<"user">[] = await userMemo
-      .getData(`queryphone-${phoneNumber}`, () =>
-        userDB.runQuery(queries.filterByPhoneNumber(phoneNumber))
-      )
-      .then((val) => val.data);
+    const results: WithID<"user">[] = await userDB.runQuery(
+      queries.filterByPhoneNumber(phoneNumber)
+    );
 
     return results[0];
   };
@@ -280,7 +289,7 @@ const userManager = () => {
     return users;
   };
 
-  const getTotalUsers = async (confirmed: boolean) => {    
+  const getTotalUsers = async (confirmed: boolean) => {
     const usersAmount = await userDB.countByQuery(
       confirmed ? queries.getAllConfirmed() : queries.getAll()
     );

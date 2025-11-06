@@ -27,6 +27,7 @@ const DbManager = collection => {
     return dbCollection.doc(id).get().then(doc => doc.data());
   };
   const deleteEntity = id => {
+    // @ts-ignore IDK why TS is complaining about this
     return upsertEntity(id, {
       deletedAt: Date.now()
     });
