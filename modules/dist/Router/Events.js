@@ -16,6 +16,9 @@ var _verifyHMAC = require("../JWT/verifyHMAC");
 var _confirmationMessage = require("../Kozz-Module/Methods/confirmationMessage");
 var _mimeTypes = _interopRequireDefault(require("mime-types"));
 var _Messages = require("../Kozz-Module/Messages");
+var _expressFormData = _interopRequireDefault(require("express-form-data"));
+var _bucketStorage = require("../CDN/bucketStorage");
+var _promises = _interopRequireDefault(require("fs/promises"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 const EventsRouter = (0, _express.Router)();
@@ -131,6 +134,27 @@ EventsRouter.get("/past", _verifyHMAC.useHMAC, (0, _SafeRequest.safeRequest)(asy
   const events = await _eventsController.default.getPastEvents();
   return {
     data: events
+  };
+}));
+EventsRouter.post("/upload_media", (0, _JWT.useJWT)(["admin"]), _expressFormData.default.parse({}), (0, _SafeRequest.safeRequest)(async (req, res) => {
+  const files = req.files.medias;
+  if (!files || files.length === 0) {
+    return (0, _SafeDatabaseTransaction.safeReturnTransaction)((0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.BAD_REQUEST));
+  }
+  const uploadPromises = files.map(async file => {
+    const fileName = `${file.originalFilename}`;
+    const filePath = `events/${req.body.folder}/${fileName}`;
+    await (0, _bucketStorage.uploadToBucket)(filePath, await _promises.default.readFile(file.path));
+    return filePath;
+  });
+  const uploadedFiles = await Promise.all(uploadPromises);
+  console.log(uploadedFiles);
+  const updateTransaction = await _eventsController.default.updateEvent(req.body.eventId, {
+    medias: uploadedFiles
+  });
+  return (0, _SafeDatabaseTransaction.safeReturnTransaction)(updateTransaction);
+  return {
+    success: true
   };
 }));
 EventsRouter.post("/random_atendee", (0, _JWT.useJWT)(["admin"]), (0, _SafeRequest.safeRequest)(async (req, res) => {

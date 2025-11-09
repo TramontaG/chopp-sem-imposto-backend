@@ -27,7 +27,9 @@
     "babel-plugin-module-resolver": "^5.0.2",
     "concurrently": "^7.6.0",
     "kozz-types": "^0.1.22",
-    "nodemon": "^2.0.22"
+    "nodemon": "^2.0.22",
+    "@types/cors": "^2.8.19",
+    "@types/express-form-data": "^2.0.5"
   },
   "bugs": {
     "url": "https://github.com/Kozz-Bot/kozz-module-scaffolding/issues"
@@ -44,6 +46,9 @@
     "mime-types": "^3.0.1",
     "yaseq": "^1.0.2",
     "yasms": "^1.0.2",
-    "zod": "^4.1.8"
+    "zod": "^4.1.8",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express-form-data": "^3.0.1"
   }
 }

@@ -23,6 +23,9 @@ import {
   inviteFriendMessage2,
   inviteFriendMessage3,
 } from "../Kozz-Module/Messages";
+import formData from "express-form-data";
+import { uploadToBucket } from "../CDN/bucketStorage";
+import fs from "fs/promises";
 
 const EventsRouter = Router();
 
@@ -188,6 +191,54 @@ EventsRouter.get(
 
     return {
       data: events,
+    };
+  })
+);
+
+type UploadedFile = {
+  fieldName: string;
+  originalFilename: string;
+  path: string;
+  headers: Record<string, string>;
+  size: number;
+  name: string;
+  type: string;
+};
+
+EventsRouter.post(
+  "/upload_media",
+  useJWT(["admin"]),
+  formData.parse({}),
+  safeRequest(async (req, res) => {
+    const files = (req as any).files.medias as UploadedFile[] | undefined;
+    if (!files || files.length === 0) {
+      return safeReturnTransaction(transactionError(FAIL_REASONS.BAD_REQUEST));
+    }
+
+    const uploadPromises = files.map(async (file) => {
+      const fileName = `${file.originalFilename}`;
+      const filePath = `events/${req.body.folder}/${fileName}`;
+
+      await uploadToBucket(filePath, await fs.readFile(file.path));
+
+      return filePath;
+    });
+
+    const uploadedFiles = await Promise.all(uploadPromises);
+
+    console.log(uploadedFiles);
+
+    const updateTransaction = await eventsController.updateEvent(
+      req.body.eventId,
+      {
+        medias: uploadedFiles,
+      }
+    );
+
+    return safeReturnTransaction(updateTransaction);
+
+    return {
+      success: true,
     };
   })
 );

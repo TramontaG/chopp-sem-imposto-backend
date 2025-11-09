@@ -16,6 +16,7 @@ let FAIL_REASONS = exports.FAIL_REASONS = /*#__PURE__*/function (FAIL_REASONS) {
   FAIL_REASONS["INVALID_USER"] = "This user is invalid. Please login again";
   FAIL_REASONS["OPERATION_FORBIDDEN"] = "This request is not possible to be fullfiled";
   FAIL_REASONS["FAIL_LOGIN"] = "Invalid username or password";
+  FAIL_REASONS["BAD_REQUEST"] = "Bad Request";
   return FAIL_REASONS;
 }({});
 const errorsMap = {
@@ -29,7 +30,8 @@ const errorsMap = {
   [FAIL_REASONS.INVALID_ADDRESS]: 400,
   [FAIL_REASONS.INVALID_USER]: 404,
   [FAIL_REASONS.OPERATION_FORBIDDEN]: 400,
-  [FAIL_REASONS.FAIL_LOGIN]: 400
+  [FAIL_REASONS.FAIL_LOGIN]: 400,
+  [FAIL_REASONS.BAD_REQUEST]: 400
 };
 const transactionError = reason => ({
   success: false,

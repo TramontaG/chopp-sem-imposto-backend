@@ -71,6 +71,44 @@ type Affiliate = {
 };
 
 adminRouter.post(
+  "/confirm_attendees",
+  useJWT(["admin"]),
+  json(),
+  safeRequest(async (req, res) => {
+    const { eventId } = V.validate(
+      {
+        eventId: V.string,
+      },
+      req.body
+    );
+
+    const event = await eventsController.getEventById(eventId);
+    if (!event) {
+      return transactionError(FAIL_REASONS.NOT_FOUND);
+    }
+
+    const attendees = await Promise.all(
+      event.attendees.map(async (userId) => {
+        const user = await userController.getUserById(userId);
+        if (user) {
+          await userController.updateUser(userId, { confirmed: true });
+          return user;
+        }
+        return null;
+      })
+    );
+
+    const confirmedAttendees = attendees.filter(Boolean);
+
+    return {
+      success: true,
+      confirmedCount: confirmedAttendees.length,
+      attendees: confirmedAttendees,
+    };
+  })
+);
+
+adminRouter.post(
   "/invite_novo",
   useJWT(["admin"]),
   safeRequest(async (req, res) => {

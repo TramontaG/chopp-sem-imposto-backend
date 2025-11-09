@@ -10,6 +10,7 @@ export enum FAIL_REASONS {
   INVALID_USER = "This user is invalid. Please login again",
   OPERATION_FORBIDDEN = "This request is not possible to be fullfiled",
   FAIL_LOGIN = "Invalid username or password",
+  BAD_REQUEST = "Bad Request",
 }
 
 const errorsMap: {
@@ -26,6 +27,7 @@ const errorsMap: {
   [FAIL_REASONS.INVALID_USER]: 404,
   [FAIL_REASONS.OPERATION_FORBIDDEN]: 400,
   [FAIL_REASONS.FAIL_LOGIN]: 400,
+  [FAIL_REASONS.BAD_REQUEST]: 400,
 };
 
 export type TransactionSuccess<Data> = {

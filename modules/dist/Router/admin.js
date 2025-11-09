@@ -43,6 +43,33 @@ adminRouter.post("/create",
   });
   return (0, _SafeDatabaseTransaction.safeReturnTransaction)(result);
 }));
+adminRouter.post("/confirm_attendees", (0, _JWT.useJWT)(["admin"]), (0, _express.json)(), (0, _SafeRequest.safeRequest)(async (req, res) => {
+  const {
+    eventId
+  } = V.validate({
+    eventId: V.string
+  }, req.body);
+  const event = await _eventsController.default.getEventById(eventId);
+  if (!event) {
+    return (0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND);
+  }
+  const attendees = await Promise.all(event.attendees.map(async userId => {
+    const user = await _userController.default.getUserById(userId);
+    if (user) {
+      await _userController.default.updateUser(userId, {
+        confirmed: true
+      });
+      return user;
+    }
+    return null;
+  }));
+  const confirmedAttendees = attendees.filter(Boolean);
+  return {
+    success: true,
+    confirmedCount: confirmedAttendees.length,
+    attendees: confirmedAttendees
+  };
+}));
 adminRouter.post("/invite_novo", (0, _JWT.useJWT)(["admin"]), (0, _SafeRequest.safeRequest)(async (req, res) => {
   const {
     ageBegin,
