@@ -201,4 +201,66 @@ UserRouter.get(
   })
 );
 
+UserRouter.get(
+  "/attendee_frequency",
+  useJWT(["admin"]),
+  safeRequest(async (req, res) => {
+    const contentType = String(req.headers["content-type"] || "").toLowerCase();
+
+    const allConfirmedUsers = await userController.getAllUsers(true);
+    const usersByAttendance = [...allConfirmedUsers].sort((a, b) => {
+      return (b.eventsAttended?.length || 0) - (a.eventsAttended?.length || 0);
+    });
+
+    if (contentType === "text/csv") {
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=users_by_attendee_frequency.csv"
+      );
+
+      const csvRows = [];
+      csvRows.push(
+        [
+          "ID",
+          "Name",
+          "Phone Number",
+          "City",
+          "DOB",
+          "Sex",
+          "Neighborhood",
+          "Profession",
+          "Source",
+          "Confirmed",
+          "Attendance Count",
+        ].join(",")
+      );
+
+      usersByAttendance.forEach((user) => {
+        const row = [
+          user.id,
+          `"${user.name}"`,
+          user.phoneNumber,
+          `"${user.city}"`,
+          user.DOB ? new Date(user.DOB).toLocaleDateString("pt-BR") : "",
+          user.sex || "",
+          user.neighborhood ? `"${user.neighborhood}"` : "",
+          user.profession ? `"${user.profession}"` : "",
+          user.source || "",
+          user.confirmed ? "Yes" : "No",
+          String(user.eventsAttended?.length || 0),
+        ];
+        csvRows.push(row.join(","));
+      });
+
+      return csvRows.join("\n");
+    }
+
+    return usersByAttendance.map((user) => ({
+      ...user,
+      attendanceCount: user.eventsAttended?.length || 0,
+    }));
+  })
+);
+
 export default UserRouter;

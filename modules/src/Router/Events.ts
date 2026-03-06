@@ -24,10 +24,28 @@ import {
   inviteFriendMessage3,
 } from "../Kozz-Module/Messages";
 import formData from "express-form-data";
-import { uploadToBucket } from "../CDN/bucketStorage";
+import { listFilesInBucketFolder, uploadToBucket } from "../CDN/bucketStorage";
 import fs from "fs/promises";
+import { noCache } from "../Util/NoCacheMiddleware";
+import { parseDateBR } from "../Util/Date";
 
 const EventsRouter = Router();
+
+const normalizeEventMediaFolder = (folder: string) =>
+  folder
+    .trim()
+    .replace(/^\/+|\/+$/g, "")
+    .replace(/\/{2,}/g, "/")
+    .replace(/^events\/+/, "");
+
+const isEventMediaFile = (filePath: string) => {
+  const fileMimeType = mime.lookup(filePath);
+
+  return (
+    typeof fileMimeType === "string" &&
+    (fileMimeType.startsWith("image/") || fileMimeType.startsWith("video/"))
+  );
+};
 
 EventsRouter.post(
   "/create_event",
@@ -46,10 +64,15 @@ EventsRouter.post(
         req.body
       );
 
+    const parsedDate = parseDateBR(date);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return safeReturnTransaction(transactionError(FAIL_REASONS.BAD_REQUEST));
+    }
+
     const createEventTransaction = await eventsController.createEvent({
       name,
       description,
-      date: new Date(date).getTime(),
+      date: parsedDate.getTime(),
       location,
       organizer,
       bannerUrl,
@@ -164,6 +187,7 @@ EventsRouter.post(
 EventsRouter.get(
   "/upcoming",
   useHMAC,
+  noCache,
   safeRequest(async (req, res) => {
     const events = await eventsController.getUpcomingEvents();
     return {
@@ -210,14 +234,27 @@ EventsRouter.post(
   useJWT(["admin"]),
   formData.parse({}),
   safeRequest(async (req, res) => {
+    const { eventId, folder } = V.validate(
+      {
+        eventId: V.string,
+        folder: V.string,
+      },
+      req.body
+    );
+
     const files = (req as any).files.medias as UploadedFile[] | undefined;
     if (!files || files.length === 0) {
       return safeReturnTransaction(transactionError(FAIL_REASONS.BAD_REQUEST));
     }
 
+    const normalizedFolder = normalizeEventMediaFolder(folder);
+    if (!normalizedFolder) {
+      return safeReturnTransaction(transactionError(FAIL_REASONS.BAD_REQUEST));
+    }
+
     const uploadPromises = files.map(async (file) => {
       const fileName = `${file.originalFilename}`;
-      const filePath = `events/${req.body.folder}/${fileName}`;
+      const filePath = `events/${normalizedFolder}/${fileName}`;
 
       await uploadToBucket(filePath, await fs.readFile(file.path));
 
@@ -229,16 +266,54 @@ EventsRouter.post(
     console.log(uploadedFiles);
 
     const updateTransaction = await eventsController.updateEvent(
-      req.body.eventId,
+      eventId,
       {
         medias: uploadedFiles,
       }
     );
 
     return safeReturnTransaction(updateTransaction);
+  })
+);
+
+EventsRouter.post(
+  "/sync_media_folder",
+  useJWT(["admin"]),
+  safeRequest(async (req, res) => {
+    const { eventId, folder } = V.validate(
+      {
+        eventId: V.string,
+        folder: V.string,
+      },
+      req.body
+    );
+
+    const normalizedFolder = normalizeEventMediaFolder(folder);
+    if (!normalizedFolder) {
+      return safeReturnTransaction(transactionError(FAIL_REASONS.BAD_REQUEST));
+    }
+
+    const storageFolder = `events/${normalizedFolder}`;
+    const medias = (await listFilesInBucketFolder(storageFolder)).filter(
+      isEventMediaFile
+    );
+
+    if (medias.length === 0) {
+      return safeReturnTransaction(transactionError(FAIL_REASONS.NOT_FOUND));
+    }
+
+    const updateTransaction = await eventsController.updateEvent(eventId, {
+      medias,
+    });
+
+    safeReturnTransaction(updateTransaction);
 
     return {
       success: true,
+      eventId,
+      folder: storageFolder,
+      total: medias.length,
+      medias,
     };
   })
 );
