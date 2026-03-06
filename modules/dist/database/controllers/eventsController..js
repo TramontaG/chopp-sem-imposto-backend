@@ -7,6 +7,7 @@ exports.default = void 0;
 var _yasms = require("yasms");
 var _ = _interopRequireDefault(require(".."));
 var _SafeDatabaseTransaction = require("../../Util/SafeDatabaseTransaction");
+var _Date = require("../../Util/Date");
 var _firestore = require("firebase-admin/firestore");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const MINUTE_IN_MS = 1000 * 60;
@@ -33,7 +34,7 @@ const eventsController = () => {
     date,
     bannerUrl
   }) => {
-    const id = `${name}-${crypto.randomUUID()}`;
+    const id = `${name}-${(0, _Date.formatDateBRForId)(date)}-${crypto.randomUUID()}`;
     const eventData = {
       bannerUrl,
       attendees: [],

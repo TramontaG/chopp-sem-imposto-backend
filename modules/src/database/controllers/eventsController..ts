@@ -10,6 +10,7 @@ import {
   transactionError,
   transactionSuccess,
 } from "../../Util/SafeDatabaseTransaction";
+import { formatDateBRForId } from "../../Util/Date";
 import { Filter } from "firebase-admin/firestore";
 import { query } from "express";
 
@@ -57,7 +58,7 @@ const eventsController = () => {
     date: number;
     bannerUrl: string | null;
   }) => {
-    const id = `${name}-${crypto.randomUUID()}`;
+    const id = `${name}-${formatDateBRForId(date)}-${crypto.randomUUID()}`;
     const eventData: AllEntitiesModel["event"] = {
       bannerUrl,
       attendees: [],

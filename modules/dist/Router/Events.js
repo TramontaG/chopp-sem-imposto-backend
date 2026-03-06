@@ -14,21 +14,17 @@ var _cryptoService = require("../Util/crypto-service");
 var _userController = _interopRequireDefault(require("../database/controllers/userController"));
 var _verifyHMAC = require("../JWT/verifyHMAC");
 var _confirmationMessage = require("../Kozz-Module/Methods/confirmationMessage");
-var _mimeTypes = _interopRequireDefault(require("mime-types"));
 var _Messages = require("../Kozz-Module/Messages");
 var _expressFormData = _interopRequireDefault(require("express-form-data"));
 var _bucketStorage = require("../CDN/bucketStorage");
 var _promises = _interopRequireDefault(require("fs/promises"));
 var _NoCacheMiddleware = require("../Util/NoCacheMiddleware");
 var _Date = require("../Util/Date");
+var _mediaType = require("../Util/mediaType");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 const EventsRouter = (0, _express.Router)();
 const normalizeEventMediaFolder = folder => folder.trim().replace(/^\/+|\/+$/g, "").replace(/\/{2,}/g, "/").replace(/^events\/+/, "");
-const isEventMediaFile = filePath => {
-  const fileMimeType = _mimeTypes.default.lookup(filePath);
-  return typeof fileMimeType === "string" && (fileMimeType.startsWith("image/") || fileMimeType.startsWith("video/"));
-};
 EventsRouter.post("/create_event", (0, _JWT.useJWT)(["events_create"]), (0, _SafeRequest.safeRequest)(async (req, res) => {
   const {
     name,
@@ -189,7 +185,7 @@ EventsRouter.post("/sync_media_folder", (0, _JWT.useJWT)(["admin"]), (0, _SafeRe
     return (0, _SafeDatabaseTransaction.safeReturnTransaction)((0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.BAD_REQUEST));
   }
   const storageFolder = `events/${normalizedFolder}`;
-  const medias = (await (0, _bucketStorage.listFilesInBucketFolder)(storageFolder)).filter(isEventMediaFile);
+  const medias = (await (0, _bucketStorage.listFilesInBucketFolder)(storageFolder)).filter(_mediaType.isEventMediaFile);
   if (medias.length === 0) {
     return (0, _SafeDatabaseTransaction.safeReturnTransaction)((0, _SafeDatabaseTransaction.transactionError)(_SafeDatabaseTransaction.FAIL_REASONS.NOT_FOUND));
   }
@@ -273,7 +269,7 @@ EventsRouter.get("/details",
     bannerUrl: event.bannerUrl,
     medias: event.medias.map(name => ({
       url: name,
-      type: Boolean(_mimeTypes.default.lookup(name)) ? _mimeTypes.default.lookup(name).includes("image") ? "image" : "video" : "unknown"
+      type: (0, _mediaType.getEventMediaType)(name)
     }))
   };
 }));

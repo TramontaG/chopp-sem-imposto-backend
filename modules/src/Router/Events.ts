@@ -13,7 +13,6 @@ import { eventCofirmationCryptoService } from "../Util/crypto-service";
 import userController from "../database/controllers/userController";
 import { useHMAC } from "../JWT/verifyHMAC";
 import { sendMessageToContactList } from "../Kozz-Module/Methods/confirmationMessage";
-import mime from "mime-types";
 import {
   eventConfirmation1,
   eventConfirmation2,
@@ -28,6 +27,10 @@ import { listFilesInBucketFolder, uploadToBucket } from "../CDN/bucketStorage";
 import fs from "fs/promises";
 import { noCache } from "../Util/NoCacheMiddleware";
 import { parseDateBR } from "../Util/Date";
+import {
+  getEventMediaType,
+  isEventMediaFile,
+} from "../Util/mediaType";
 
 const EventsRouter = Router();
 
@@ -37,15 +40,6 @@ const normalizeEventMediaFolder = (folder: string) =>
     .replace(/^\/+|\/+$/g, "")
     .replace(/\/{2,}/g, "/")
     .replace(/^events\/+/, "");
-
-const isEventMediaFile = (filePath: string) => {
-  const fileMimeType = mime.lookup(filePath);
-
-  return (
-    typeof fileMimeType === "string" &&
-    (fileMimeType.startsWith("image/") || fileMimeType.startsWith("video/"))
-  );
-};
 
 EventsRouter.post(
   "/create_event",
@@ -416,11 +410,7 @@ EventsRouter.get(
       bannerUrl: event.bannerUrl,
       medias: event.medias.map((name) => ({
         url: name,
-        type: Boolean(mime.lookup(name))
-          ? (mime.lookup(name) as string).includes("image")
-            ? "image"
-            : "video"
-          : "unknown",
+        type: getEventMediaType(name),
       })),
     };
   })

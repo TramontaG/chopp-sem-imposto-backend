@@ -4,6 +4,9 @@ const BR_DATE_TIME_REGEX =
   /^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/;
 
 const invalidDate = () => new Date(Number.NaN);
+const padDatePart = (value: number) => value.toString().padStart(2, "0");
+const toBrazilDate = (timestamp: number) =>
+  new Date(timestamp - BRAZIL_UTC_OFFSET_IN_MS);
 
 export function parseDateBR(dateStr: string): Date {
   const match = BR_DATE_TIME_REGEX.exec(dateStr.trim());
@@ -53,4 +56,14 @@ export function parseDateBR(dateStr: string): Date {
   }
 
   return parsedDate;
+}
+
+export function formatDateBRForId(timestamp: number): string {
+  const brazilDate = toBrazilDate(timestamp);
+
+  return `${brazilDate.getUTCFullYear()}-${padDatePart(
+    brazilDate.getUTCMonth() + 1
+  )}-${padDatePart(brazilDate.getUTCDate())}_${padDatePart(
+    brazilDate.getUTCHours()
+  )}-${padDatePart(brazilDate.getUTCMinutes())}`;
 }
