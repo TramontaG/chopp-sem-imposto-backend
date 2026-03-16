@@ -12,7 +12,6 @@ import {
 } from "../../Util/SafeDatabaseTransaction";
 import { formatDateBRForId } from "../../Util/Date";
 import { Filter } from "firebase-admin/firestore";
-import { query } from "express";
 
 const MINUTE_IN_MS = 1000 * 60;
 const eventsMemo = createMemoService(undefined, MINUTE_IN_MS);

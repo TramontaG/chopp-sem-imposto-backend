@@ -11,7 +11,6 @@ import {
 } from "../Util/SafeDatabaseTransaction";
 import { useHMAC } from "../JWT/verifyHMAC";
 import { findBestCityMatch } from "../Util/sanitizeCity";
-import { sendConfirmationMessage } from "../Kozz-Module/Methods/confirmationMessage";
 
 const signupRouter = Router();
 

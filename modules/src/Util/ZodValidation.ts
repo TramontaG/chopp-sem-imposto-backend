@@ -92,8 +92,8 @@ const literalSchema = Zod.union([
 type Literal = Zod.infer<typeof literalSchema>;
 export type Json = Literal | { [key: string]: Json } | Json[];
 export const jsonSchema: Zod.ZodType<Json> = Zod.lazy(() =>
-  Zod.union([literalSchema, Zod.array(jsonSchema), Zod.record(jsonSchema)])
-);
+  Zod.union([literalSchema, Zod.array(jsonSchema), Zod.record(Zod.string(), jsonSchema)])
+) as Zod.ZodType<Json>;
 
 export const string = Zod.string();
 export const number = Zod.number();
