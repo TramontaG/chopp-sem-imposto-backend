@@ -55,7 +55,7 @@ const validate = (zod, obj) => {
 // code copied from https://zod.dev/?id=json-type
 exports.validate = validate;
 const literalSchema = Zod.union([Zod.string(), Zod.number(), Zod.boolean(), Zod.null()]);
-const jsonSchema = exports.jsonSchema = Zod.lazy(() => Zod.union([literalSchema, Zod.array(jsonSchema), Zod.record(jsonSchema)]));
+const jsonSchema = exports.jsonSchema = Zod.lazy(() => Zod.union([literalSchema, Zod.array(jsonSchema), Zod.record(Zod.string(), jsonSchema)]));
 const string = exports.string = Zod.string();
 const number = exports.number = Zod.number();
 const stringArray = exports.stringArray = Zod.array(string);
